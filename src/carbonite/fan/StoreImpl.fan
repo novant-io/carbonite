@@ -35,7 +35,7 @@ internal abstract const class StoreImpl
   protected const AtomicRef connRef := AtomicRef(null)
 
   ** Execute sql querty with params and return results as Row[] list.
-  protected Row[] exec(Str query, Str:Str params := [:])
+  protected Row[] exec(Str query, [Str:Obj]? params := null)
   {
     res := execRaw(query, params)
     if (res is Row[]) return res
@@ -44,7 +44,7 @@ internal abstract const class StoreImpl
   }
 
   ** Execute sql querty with params and return results as Row[] list.
-  protected Obj execRaw(Str query, Str:Str params := [:])
+  protected Obj execRaw(Str query, [Str:Obj]? params := null)
   {
     conn.sql(query).prepare.execute(params)
   }
@@ -126,9 +126,16 @@ internal abstract const class StoreImpl
   }
 
   ** Return result from select sql statement.
-  virtual CRec[] select(Str table, Str cols)
+  virtual CRec[] select(Str table, Str cols, [Str:Obj]? where := null)
   {
+    sql := "select * from ${table}"
+    if (where != null)
+    {
+      cond := StrBuf()
+      where.each |v,n| { cond.join("${n} = @${n}", " and ") }
+      sql += " where ${cond}"
+    }
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
-    exec("select * from ${table}").map |row| { CRec(row) }
+    return exec(sql, where).map |row| { CRec(row) }
   }
 }

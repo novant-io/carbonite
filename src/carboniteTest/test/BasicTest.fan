@@ -27,15 +27,19 @@ class BasicTest : Test
 
     // add rows
     CTable e := ds.table(Employees#)
-    e.create(["name":"Ron Burgundy",          "pos":"lead"])
-    e.create(["name":"Veronica Corningstone", "pos":"lead"])
-    e.create(["name":"Brian Fantana",         "pos":"sports"])
-    e.create(["name":"Brick Tamland",         "pos":"weather"])
+    e.create(["id":1, "name":"Ron Burgundy",          "pos":"lead"])
+    e.create(["id":2, "name":"Veronica Corningstone", "pos":"lead"])
+    e.create(["id":3, "name":"Brian Fantana",         "pos":"sports"])
+    e.create(["id":4, "name":"Brick Tamland",         "pos":"weather"])
     verifyEq(e.size, 4)
     verifyEq(ds.table(Employees#).size, 4)
     verifyEq(ds.table(Employees#).listAll.size, 4)
     verifyEq(e.listAll[0]->name, "Ron Burgundy")
     verifyEq(e.listAll[2]->name, "Brian Fantana")
+
+    // get
+    verifyEq(e.get(2)->name, "Veronica Corningstone")
+    verifyEq(e.get(5), null)
 
     // close and verify fail
     ds.close

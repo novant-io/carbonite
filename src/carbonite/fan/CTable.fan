@@ -47,6 +47,13 @@ abstract const class CTable
     store.impl.create(this.name, fields)
   }
 
+  ** Get record by id.
+  CRec? get(Int id)
+  {
+    // TODO: check if cols.hasid ?
+    store.impl.select(this.name, "*", ["id":id]).first
+  }
+
   ** List records in this table.
   CRec[] listAll()
   {
