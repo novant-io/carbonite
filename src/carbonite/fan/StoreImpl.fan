@@ -138,4 +138,12 @@ internal abstract const class StoreImpl
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
     return exec(sql, where).map |row| { CRec(row) }
   }
+
+  ** Update an existing record in sql database.
+  virtual Void update(Str table, Int id, Str:Obj fields)
+  {
+    assign := fields.keys.join(",") |n| { "${n} = @${n}" }
+    exec("update ${table} set ${assign} where id = ${id}", fields)
+    // return new rec
+  }
 }

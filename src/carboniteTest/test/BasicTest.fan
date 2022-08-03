@@ -61,5 +61,16 @@ class BasicTest : Test
     // schema mismatch
     ds.close
     verifyErr(Err#) { ds = CStore.openSqlite(dbfile, [EmployeesErr4#]) }
+
+    // update row
+    ds.close
+    ds = CStore.openSqlite(dbfile, [Employees#])
+    e  = ds.table(Employees#)
+    verifyEq(e.listAll[0]->name, "Ron Burgundy")
+    e.update(1, ["name":"Ronnie Burgie"])
+    verifyEq(e.listAll[0]->name, "Ronnie Burgie")
+    e.update(4, ["name":"Bricky", "pos":"lead"])
+    verifyEq(e.listAll[3]->name, "Bricky")
+    verifyEq(e.listAll[3]->pos,  "lead")
   }
 }

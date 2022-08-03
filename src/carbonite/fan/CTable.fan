@@ -60,6 +60,21 @@ abstract const class CTable
     store.impl.select(this.name, "*")
   }
 
+  ** Update existing record in this table with given field values and
+  ** return the new record instance.
+  Void /*CRec*/ update(Int id, Str:Obj fields)
+  {
+    // verify field cols
+    fields.each |v,k|
+    {
+      c := cmap[k]
+      if (c == null) throw ArgErr("Field not a column: '${k}'")
+
+      // TODO: check nullable
+    }
+    store.impl.update(this.name, id, fields)
+  }
+
   internal Void init(CStore store)
   {
     this.storeRef.val = store
