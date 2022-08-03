@@ -71,6 +71,10 @@ internal const class SqliteStoreImpl : StoreImpl
         a := d.day
         return y.shiftl(16).or(m.shiftl(8)).or(a)
 
+      case DateTime#:
+        DateTime d := fan
+        return d.toUtc.ticks
+
       default: throw ArgErr("Unsupported col type '${col.type}'")
     }
   }
@@ -85,6 +89,9 @@ internal const class SqliteStoreImpl : StoreImpl
         m := v.shiftr(8).and(0xff)
         d := v.and(0xff)
         return Date(y, Month.vals[m-1], d)
+
+      case DateTime#:
+        return DateTime.makeTicks(sql, TimeZone.utc)
 
       default: return sql
     }

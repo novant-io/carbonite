@@ -21,11 +21,19 @@ const class CRec
 
   ** Get the record value for given field as 'Int', or
   ** null if not found or value is not a Int type.
-  Int? geti(Str name) { get(name) as Int }
+  Int? getInt(Str name) { get(name) as Int }
 
   ** Get the record value for given field as 'Str', or
   ** null if not found or value is not a 'Str' type.
-  Str? gets(Str name) { get(name) as Str }
+  Str? getStr(Str name) { get(name) as Str }
+
+  ** Get the record value for given field as 'Date', or
+  ** null if not found or value is not a 'Str' type.
+  Date? getDate(Str name) { get(name) as Date }
+
+  ** Get the record value for given field as 'DateTime', or
+  ** null if not found or value is not a 'Str' type.
+  DateTime? getDateTime(Str name) { get(name) as DateTime }
 
   // getf
   // getJson -> once?

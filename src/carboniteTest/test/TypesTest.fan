@@ -32,6 +32,7 @@ class TypesTest : Test
     verifyEq(rec->str, null)
     update(["str":"foo bar"])
     verifyEq(rec->str, "foo bar")
+    verifyEq(rec.getStr("str"), "foo bar")
   }
 
   Void testInt()
@@ -39,6 +40,7 @@ class TypesTest : Test
     verifyEq(rec->int, null)
     update(["int":25])
     verifyEq(rec->int, 25)
+    verifyEq(rec.getInt("int"), 25)
   }
 
   Void testDate()
@@ -47,11 +49,16 @@ class TypesTest : Test
     d := Date("2022-08-03")
     update(["date":d])
     verifyEq(rec->date, d)
+    verifyEq(rec.getDate("date"), d)
   }
 
   Void testDateTime()
   {
     verifyEq(rec->datetime, null)
-    // dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
+    dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
+    update(["datetime":dt])
+    verifyEq(rec->datetime, dt)
+    verifyEq(rec->datetime.toStr, "2022-08-03T19:27:47Z UTC")
+    verifyEq(rec.getDateTime("datetime"), dt)
   }
 }
