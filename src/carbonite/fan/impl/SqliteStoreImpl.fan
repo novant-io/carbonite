@@ -41,9 +41,11 @@ internal const class SqliteStoreImpl : StoreImpl
     // base type
     switch (col.type.toNonNullable)
     {
-      case Str#: sql.join("text",    " ")
-      case Int#: sql.join("integer", " ")
-      default:   throw ArgErr("Unsupported col type '${col.type}'")
+      case Str#:  sql.join("text",    " ")
+      case Int#:  sql.join("integer", " ")
+      case Date#: sql.join("integer", " ")
+      //case DateTime#: sql.join("integer", " ")
+      default:        throw ArgErr("Unsupported col type '${col.type}'")
     }
 
     // nullable
