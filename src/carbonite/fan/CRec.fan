@@ -14,14 +14,10 @@
 const class CRec
 {
   ** Internal ctor.
-  internal new make(Row row) { this.row = row }
+  internal new make(Str:Obj? map) { this.map = map }
 
   ** Get the record value for given 'name', or null if not found.
-  Obj? get(Str name)
-  {
-    c := row.col(name, false)
-    return c == null ? null : row.get(c)
-  }
+  Obj? get(Str name) { map[name] }
 
   ** Get the record value for given field as 'Int', or
   ** null if not found or value is not a Int type.
@@ -50,10 +46,10 @@ const class CRec
   {
     buf := StrBuf()
     buf.add("{")
-    row.cols.each |c| { buf.add(" ${c}:${row.get(c)}") }
+    map.each |v,c| { buf.add(" ${c}:${v}") }
     buf.add(" }")
     return buf.toStr
   }
 
-  private const Row row
+  private const Str:Obj? map
 }

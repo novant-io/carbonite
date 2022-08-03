@@ -15,23 +15,43 @@ using carbonite
 class TypesTest : Test
 {
   private File dbfile := Env.cur.tempDir + `test.db`
-  override Void setup() { dbfile.delete }
-
-  Void testTypes()
+  override Void setup()
   {
-    d  := Date("2022-08-03")
-    dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
+    dbfile.delete
+    this.db = CStore.openSqlite(dbfile, [Types#])
+    this.t  = db.table(Types#)
+    this.t.create(["id":1])
+  }
+  private CStore? db
+  private CTable? t
+  private CRec rec() { t.listAll.first }
+  private Void update(Str:Obj map) { t.update(1, map) }
 
-    ds := CStore.openSqlite(dbfile, [Types#])
-    ds.table(Types#).create([
-      "str":  "foobar",
-      "int":  5,
-      // "date": d,
-    ])
+  Void testStr()
+  {
+    verifyEq(rec->str, null)
+    update(["str":"foo bar"])
+    verifyEq(rec->str, "foo bar")
+  }
 
-    r := ds.table(Types#).listAll[0]
-    verifyEq(r->str,  "foobar")
-    verifyEq(r->int,  5)
-    // verifyEq(r->date, d)
+  Void testInt()
+  {
+    verifyEq(rec->int, null)
+    update(["int":25])
+    verifyEq(rec->int, 25)
+  }
+
+  Void testDate()
+  {
+    verifyEq(rec->date, null)
+    d := Date("2022-08-03")
+    update(["date":d])
+    verifyEq(rec->date, d)
+  }
+
+  Void testDateTime()
+  {
+    verifyEq(rec->datetime, null)
+    // dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
   }
 }

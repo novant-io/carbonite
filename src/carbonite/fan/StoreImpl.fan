@@ -110,6 +110,12 @@ internal abstract const class StoreImpl
   ** Return SQL schema for given 'CCol'.
   abstract Str colToSql(CCol col)
 
+  ** Return SQL value for given Fantom value and 'CCol'.
+  abstract Obj fanToSql(CCol col, Obj fan)
+
+  ** Return Fantom value for given SQL value and 'CCol'.
+  abstract Obj sqlToFan(CCol col, Obj fan)
+
   ** Return SQL column schema from database for given table name.
   abstract Str[] describeTable(Str table)
 
@@ -117,18 +123,18 @@ internal abstract const class StoreImpl
   abstract Int tableSize(CTable table)
 
   ** Create a new record in sql database.
-  virtual Void create(Str table, Str:Obj fields)
+  virtual Void create(CTable table, Str:Obj fields)
   {
     cols := fields.keys.join(",")
     vars := fields.keys.join(",") |n| { "@${n}" }
-    exec("insert into ${table} (${cols}) values (${vars})", fields)
+    exec("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
     // return new rec
   }
 
   ** Return result from select sql statement.
-  virtual CRec[] select(Str table, Str cols, [Str:Obj]? where := null)
+  virtual CRec[] select(CTable table, Str cols, [Str:Obj]? where := null)
   {
-    sql := "select * from ${table}"
+    sql := "select * from ${table.name}"
     if (where != null)
     {
       cond := StrBuf()
@@ -136,14 +142,38 @@ internal abstract const class StoreImpl
       sql += " where ${cond}"
     }
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
-    return exec(sql, where).map |row| { CRec(row) }
+    return exec(sql, where).map |row|
+    {
+      // TODO FIXIT YOWZERS
+      map := Str:Obj?[:]
+      row.cols.each |rc|
+      {
+        c := table.cols.find |c| { c.name == rc.name }
+        if (c == null) return
+        v := row.get(rc)
+        if (v != null) map[c.name] = sqlToFan(c, v)
+      }
+      return CRec(map)
+    }
   }
 
   ** Update an existing record in sql database.
-  virtual Void update(Str table, Int id, Str:Obj fields)
+  virtual Void update(CTable table, Int id, Str:Obj fields)
   {
     assign := fields.keys.join(",") |n| { "${n} = @${n}" }
-    exec("update ${table} set ${assign} where id = ${id}", fields)
+    exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
     // return new rec
+  }
+
+  // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
+  ** Convert fantom valus to sql compat values.
+  private Str:Obj fieldsToSql(CTable table, Str:Obj fan)
+  {
+    // TODO FIXIT YOWZERS
+    fan.map |f,n|
+    {
+      c := table.cols.find |c| { c.name == n }
+      return fanToSql(c, f)
+    }
   }
 }

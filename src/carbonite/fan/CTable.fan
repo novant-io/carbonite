@@ -44,26 +44,26 @@ abstract const class CTable
 
       // TODO: check nullable
     }
-    store.impl.create(this.name, fields)
+    store.impl.create(this, fields)
   }
 
   ** Get record by id.
   CRec? get(Int id)
   {
     // TODO: check if cols.hasid ?
-    store.impl.select(this.name, "*", ["id":id]).first
+    store.impl.select(this, "*", ["id":id]).first
   }
 
   ** Get record by column and value match.
   CRec? getBy(Str col, Obj val)
   {
-    store.impl.select(this.name, "*", [col:val]).first
+    store.impl.select(this, "*", [col:val]).first
   }
 
   ** List records in this table.
   CRec[] listAll()
   {
-    store.impl.select(this.name, "*")
+    store.impl.select(this, "*")
   }
 
   ** Update existing record in this table with given field values and
@@ -78,7 +78,7 @@ abstract const class CTable
 
       // TODO: check nullable
     }
-    store.impl.update(this.name, id, fields)
+    store.impl.update(this, id, fields)
   }
 
   internal Void init(CStore store)

@@ -16,8 +16,10 @@ const class Types : CTable
 {
   override const Str name := "types"
   override const CCol[] cols := [
-    CCol("str",  Str#,  [:]),
-    CCol("int",  Int#,  [:]),
-    // CCol("date", Date#, [:]),
+    CCol("id",       Int#,       [:]),
+    CCol("str",      Str?#,      [:]),
+    CCol("int",      Int?#,      [:]),
+    CCol("date",     Date?#,     [:]),
+    CCol("datetime", DateTime?#, [:]),
   ]
 }
