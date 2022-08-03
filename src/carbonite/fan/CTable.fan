@@ -54,6 +54,12 @@ abstract const class CTable
     store.impl.select(this.name, "*", ["id":id]).first
   }
 
+  ** Get record by column and value match.
+  CRec? getBy(Str col, Obj val)
+  {
+    store.impl.select(this.name, "*", [col:val]).first
+  }
+
   ** List records in this table.
   CRec[] listAll()
   {
