@@ -56,9 +56,11 @@ class TypesTest : Test
   {
     verifyEq(rec->datetime, null)
     dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
+    ny := TimeZone("New_York")
     update(["datetime":dt])
     verifyEq(rec->datetime, dt)
     verifyEq(rec->datetime.toStr, "2022-08-03T19:27:47Z UTC")
     verifyEq(rec.getDateTime("datetime"), dt)
+    verifyEq(rec.getDateTime("datetime", ny).toStr, "2022-08-03T15:27:47-04:00 New_York")
   }
 }

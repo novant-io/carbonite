@@ -32,8 +32,15 @@ const class CRec
   Date? getDate(Str name) { get(name) as Date }
 
   ** Get the record value for given field as 'DateTime', or
-  ** null if not found or value is not a 'Str' type.
-  DateTime? getDateTime(Str name) { get(name) as DateTime }
+  ** null if not found or value is not a 'Str' type.  If
+  ** 'tz' is non-null, convert to given timezone.
+  DateTime? getDateTime(Str name, TimeZone? tz := null)
+  {
+    dt := get(name) as DateTime
+    if (dt == null) return null
+    if (tz == null) return dt
+    return dt.toTimeZone(tz)
+  }
 
   // getf
   // getJson -> once?
