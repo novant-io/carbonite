@@ -34,16 +34,23 @@ abstract const class CTable
 
   ** Create a new record in this table with given field values and
   ** return the new record instance.
-  Void /*CRec*/ create(Str:Obj fields)
+  Void /*CRec*/ create(Str:Obj? fields)
   {
     // verify field cols
     fields.each |v,k|
     {
       c := cmap[k]
       if (c == null) throw ArgErr("Field not a column: '${k}'")
-
-      // TODO: check nullable
     }
+
+    // check non-nullable cols
+    cmap.vals.each |c|
+    {
+      v := fields[c.name]
+      if (v == null && !c.type.isNullable)
+        throw ArgErr("Missing non-nullable column value for '${c.name}'")
+    }
+
     store.impl.create(this, fields)
   }
 

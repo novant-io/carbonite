@@ -167,11 +167,12 @@ internal abstract const class StoreImpl
 
   // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
   ** Convert fantom valus to sql compat values.
-  private Str:Obj fieldsToSql(CTable table, Str:Obj fan)
+  private Str:Obj? fieldsToSql(CTable table, Str:Obj? fan)
   {
     // TODO FIXIT YOWZERS
     fan.map |f,n|
     {
+      if (f == null) return null
       c := table.cols.find |c| { c.name == n }
       return fanToSql(c, f)
     }

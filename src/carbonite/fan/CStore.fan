@@ -48,10 +48,18 @@ const class CStore
   const CTable[] tables
 
   ** Get table by type or name.
-  CTable? table(Obj table)
+  CTable? table(Obj table, Bool checked := true)
   {
-    if (table is Str)  return nmap[table]
-    if (table is Type) return tmap[table]
+    try
+    {
+      if (table is Str)  return nmap[table] ?: throw Err()
+      if (table is Type) return tmap[table] ?: throw Err()
+    }
+    catch (Err err)
+    {
+      if (!checked) return null
+      throw ArgErr("Table not found '${table}'")
+    }
     throw ArgErr("Unsupported argument '${table}'")
   }
 
