@@ -46,7 +46,9 @@ class BasicTest : Test
 
     // list
     verifyEq(e.listAll.size, 4)
-    verifyEq(e.listBy("pos", "lead").size, 2)
+    verifyEq(e.listBy(["pos":"lead"]).size, 2)
+    verifyEq(e.listBy(["pos":"lead", "name":"Ron Burgundy"]).size, 1)
+    verifyEq(e.listBy(["pos":"lead", "name":"No one"]).size, 0)
 
     // close and verify fail
     ds.close

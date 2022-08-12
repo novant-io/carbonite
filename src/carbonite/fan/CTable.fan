@@ -73,10 +73,10 @@ abstract const class CTable
     store.impl.select(this, "*")
   }
 
-  ** List records in this table where 'col' == 'val'.
-  CRec[] listBy(Str col, Obj? val)
+  ** List records in this table where all 'where' conditions are equal.
+  CRec[] listBy(Str:Obj where)
   {
-    store.impl.select(this, "*", [col:val])
+    store.impl.select(this, "*", where)
   }
 
   ** Update existing record in this table with given field values and
