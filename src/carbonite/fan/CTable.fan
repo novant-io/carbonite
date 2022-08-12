@@ -61,10 +61,10 @@ abstract const class CTable
     store.impl.select(this, "*", ["id":id]).first
   }
 
-  ** Get record by column and value match.
-  CRec? getBy(Str col, Obj val)
+  ** Get first record where all 'where' conditions are met.
+  CRec? getBy(Str:Obj where)
   {
-    store.impl.select(this, "*", [col:val]).first
+    store.impl.select(this, "*", where).first
   }
 
   ** List records in this table.

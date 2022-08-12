@@ -42,7 +42,9 @@ class BasicTest : Test
     verifyEq(e.get(5), null)
 
     // getBy
-    verifyEq(e.getBy("pos", "weather")->name, "Brick Tamland")
+    verifyEq(e.getBy(["pos":"weather"])->name,      "Brick Tamland")
+    verifyEq(e.getBy(["pos":"lead"])->name,         "Ron Burgundy")
+    verifyEq(e.getBy(["pos":"lead", "id":2])->name, "Veronica Corningstone")
 
     // list
     verifyEq(e.listAll.size, 4)
