@@ -73,6 +73,12 @@ abstract const class CTable
     store.impl.select(this, "*")
   }
 
+  ** List records in this table where 'col' == 'val'.
+  CRec[] listBy(Str col, Obj? val)
+  {
+    store.impl.select(this, "*", [col:val])
+  }
+
   ** Update existing record in this table with given field values and
   ** return the new record instance.
   Void /*CRec*/ update(Int id, Str:Obj fields)

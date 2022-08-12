@@ -44,6 +44,10 @@ class BasicTest : Test
     // getBy
     verifyEq(e.getBy("pos", "weather")->name, "Brick Tamland")
 
+    // list
+    verifyEq(e.listAll.size, 4)
+    verifyEq(e.listBy("pos", "lead").size, 2)
+
     // close and verify fail
     ds.close
     verifyErr(Type.find("carbonite::SqlErr")) { x := ds.table(Employees#).size }
