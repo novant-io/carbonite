@@ -9,7 +9,7 @@
 using carbonite
 
 *************************************************************************
-** PrimaryKeyTable
+** PrimaryKeyTests
 *************************************************************************
 
 const class PrimaryKeyTests : CTable

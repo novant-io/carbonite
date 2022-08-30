@@ -44,4 +44,10 @@ abstract class AbstractStoreTest : Test
       verifyEq(rec.get(k), v)
     }
   }
+
+  // TODO FIXIT: really just a temp fix until we cleanup ported sql stack
+  protected Void verifySqlErr(|This| func)
+  {
+    verifyErr(Type.find("carbonite::SqlErr")) { func(this) }
+  }
 }

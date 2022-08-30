@@ -54,6 +54,9 @@ internal const class SqliteStoreImpl : StoreImpl
     // primary key
     if (col.primaryKey) sql.join("primary key", " ")
 
+    // unique
+    if (col.meta["unique"] == true) sql.join("unique", " ")
+
     return sql.toStr
   }
 
