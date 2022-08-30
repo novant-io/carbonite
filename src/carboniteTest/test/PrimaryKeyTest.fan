@@ -63,6 +63,9 @@ class PrimaryKeyTest : AbstractStoreTest
       verifyRec(p.listAll[1], ["id":2, "name":"Beta"])
       verifyRec(p.listAll[2], ["id":5, "name":"Gamma"])
       verifyRec(p.listAll[3], ["id":6, "name":"Delta"])
+
+      // verify unique
+      verifySqlErr { p.create(["id":5, "name":"ID Exists"]) }
     }
 
     // reopen file and add additional rows
