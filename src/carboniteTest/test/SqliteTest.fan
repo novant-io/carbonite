@@ -34,6 +34,9 @@ class SqliteTest : Test
     // nullable
     verifyCol(impl, CCol("foo", Str?#, [:]), "foo text")
     verifyCol(impl, CCol("foo", Int?#, [:]), "foo integer")
+
+    // primary key
+    verifyCol(impl, CCol("foo", Int#, ["primary_key":true]), "foo integer not null primary key")
   }
 
   private Obj makeImpl()

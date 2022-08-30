@@ -47,7 +47,7 @@ abstract const class CTable
     cmap.vals.each |c|
     {
       v := fields[c.name]
-      if (v == null && !c.type.isNullable)
+      if (v == null && (!c.type.isNullable && !c.primaryKey))
         throw ArgErr("Missing non-nullable column value for '${c.name}'")
     }
 

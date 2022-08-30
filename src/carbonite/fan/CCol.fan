@@ -14,11 +14,12 @@
 const class CCol
 {
   ** Ctor.
-  new make(Str name, Type type, Str:Obj[] meta)
+  new make(Str name, Type type, Str:Obj meta)
   {
     this.name = name
     this.type = type
     this.meta = meta
+    this.primaryKey = meta["primary_key"] == true
   }
 
   ** Name of this column.
@@ -29,6 +30,9 @@ const class CCol
 
   ** Metadata for this column.
   const Str:Obj meta
+
+  ** Is this column a primary key?
+  const Bool primaryKey
 
   override Str toStr() { name }
 }
