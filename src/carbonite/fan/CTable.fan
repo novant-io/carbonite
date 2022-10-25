@@ -94,6 +94,12 @@ abstract const class CTable
     store.impl.update(this, id, fields)
   }
 
+  ** Delete an existing record in this given id.
+  Void delete(Int id)
+  {
+    store.impl.delete(this, id)
+  }
+
   internal Void init(CStore store)
   {
     this.storeRef.val = store

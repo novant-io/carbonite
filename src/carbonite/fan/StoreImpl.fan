@@ -165,6 +165,12 @@ internal abstract const class StoreImpl
     // return new rec
   }
 
+  ** Delete an existing record in sql database.
+  virtual Void delete(CTable table, Int id)
+  {
+    exec("delete from ${table.name} where id = ${id}")
+  }
+
   // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
   ** Convert fantom valus to sql compat values.
   private Str:Obj? fieldsToSql(CTable table, Str:Obj? fan)

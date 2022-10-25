@@ -83,5 +83,25 @@ class BasicTest : Test
     e.update(4, ["name":"Bricky", "pos":"lead"])
     verifyEq(e.listAll[3]->name, "Bricky")
     verifyEq(e.listAll[3]->pos,  "lead")
+
+    // delete row
+    verifyEq(e.size, 4)
+    e.delete(1)
+    verifyEq(e.size, 3)
+    verifyEq(e.listAll[0]->name, "Veronica Corningstone")
+
+    // delete row
+    e.delete(2)
+    verifyEq(e.size, 2)
+    verifyEq(e.listAll[0]->name, "Brian Fantana")
+
+    // delete row
+    e.delete(3)
+    verifyEq(e.size, 1)
+    verifyEq(e.listAll[0]->name, "Bricky")
+
+    // delete row
+    e.delete(4)
+    verifyEq(e.size, 0)
   }
 }
