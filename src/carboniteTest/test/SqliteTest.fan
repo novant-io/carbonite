@@ -48,6 +48,19 @@ class SqliteTest : Test
     // foreign key
     verifyCol(store, CCol("foo", Int#,  ["foreign_key":"bar(id)"]), "foo integer not null references bar(id)")
     verifyCol(store, CCol("foo", Int?#, ["foreign_key":"bar(id)"]), "foo integer references bar(id)")
+
+    // unknown keys
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["some_key":true])) }
+
+    // invalid vals
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["primary_key":false]))   }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["primary_key":5]))       }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["auto_complete":false])) }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["auto_complete":5]))     }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["unique":false]))        }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["unique":5]))            }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["foreign_key":true]))    }
+    verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["foreign_key":5]))       }
   }
 
   private CStore makeStore()
@@ -57,6 +70,11 @@ class SqliteTest : Test
 
   private Void verifyCol(CStore store, CCol col, Str test)
   {
-    verifyEq(store->impl->colToSql(store, col), test)
+    verifyEq(colToSql(store, col), test)
+  }
+
+  private Str colToSql(CStore store, CCol col)
+  {
+    store->impl->colToSql(store, col)
   }
 }

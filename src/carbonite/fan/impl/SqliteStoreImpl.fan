@@ -51,25 +51,31 @@ internal const class SqliteStoreImpl : StoreImpl
     // nullable
     if (!col.type.isNullable) sql.join("not null", " ")
 
-
-// TODO FIXIT: meta.each -> throw unknown_name
-
-    // primary key
-    if (col.primaryKey) sql.join("primary key", " ")
-
-    // auto_increment (sqlite requires primary key; let db enforce)
-    if (col.meta["auto_increment"] == true) sql.join("autoincrement", " ")
-
-    // unique
-    if (col.meta["unique"] == true) sql.join("unique", " ")
-
-    // foreign key
-    Obj? fk := col.meta["foreign_key"]
-    if (fk != null)
+    // apply meta
+    col.meta.each |val, key|
     {
-      // resolve type names to table(id)
-      if (fk is Type) fk = "${store.table(fk).name}(id)"
-      sql.join("references ${fk}", " ")
+      switch (key)
+      {
+        case "primary_key":
+          if (val == true) sql.join("primary key", " ")
+          else throw ArgErr("invalid priamry_value '${val}'")
+
+        case "auto_increment":
+          if (val == true) sql.join("autoincrement", " ")
+          else throw ArgErr("invalid auto_increment '${val}'")
+
+        case "unique":
+          if (val == true) sql.join("unique", " ")
+          else throw ArgErr("invalid unique '${val}'")
+
+        case "foreign_key":
+          fk := val
+          if (fk is Type) fk = "${store.table(fk).name}(id)"
+          if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
+          sql.join("references ${fk}", " ")
+
+        default: throw ArgErr("unknown col meta '${key}'")
+      }
     }
 
     return sql.toStr
