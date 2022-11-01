@@ -54,6 +54,9 @@ internal const class SqliteStoreImpl : StoreImpl
     // primary key
     if (col.primaryKey) sql.join("primary key", " ")
 
+    // auto_increment (sqlite requires primary key; let db enforce)
+    if (col.meta["auto_increment"] == true) sql.join("autoincrement", " ")
+
     // unique
     if (col.meta["unique"] == true) sql.join("unique", " ")
 
