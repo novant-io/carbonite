@@ -15,7 +15,7 @@ internal const class SqliteStoreImpl : StoreImpl
   new make(File file)
   {
     if (!file.exists) file.create
-    conn := makeConn("org.sqlite.JDBC", "jdbc:sqlite:${file.osPath}", null, null)
+    conn := makeConn("org.sqlite.JDBC", "jdbc:sqlite:${file.osPath}?foreign_keys=on", null, null)
     this.connRef.val = Unsafe(conn)
   }
 
@@ -33,7 +33,7 @@ internal const class SqliteStoreImpl : StoreImpl
     return r.get(r.cols.first)
   }
 
-  override Str colToSql(CCol col)
+  override Str colToSql(CStore store, CCol col)
   {
     sql := StrBuf()
     sql.add(col.name)
@@ -51,6 +51,9 @@ internal const class SqliteStoreImpl : StoreImpl
     // nullable
     if (!col.type.isNullable) sql.join("not null", " ")
 
+
+// TODO FIXIT: meta.each -> throw unknown_name
+
     // primary key
     if (col.primaryKey) sql.join("primary key", " ")
 
@@ -59,6 +62,15 @@ internal const class SqliteStoreImpl : StoreImpl
 
     // unique
     if (col.meta["unique"] == true) sql.join("unique", " ")
+
+    // foreign key
+    Obj? fk := col.meta["foreign_key"]
+    if (fk != null)
+    {
+      // resolve type names to table(id)
+      if (fk is Type) fk = "${store.table(fk).name}(id)"
+      sql.join("references ${fk}", " ")
+    }
 
     return sql.toStr
   }

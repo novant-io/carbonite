@@ -77,7 +77,7 @@ internal abstract const class StoreImpl
       {
         // create table if not exist
         cstr := Str[,]
-          .addAll(t.cols.map |c| { colToSql(c) })
+          .addAll(t.cols.map |c| { colToSql(store, c) })
           .addAll(t.constraints.map |c| { constraintToSql(c) })
           .join(",")
         exec("create table if not exists ${t.name} (${cstr})")
@@ -90,13 +90,13 @@ internal abstract const class StoreImpl
           if (cur == null)
           {
             // add missing column
-            exec("alter table ${t.name} add column ${colToSql(c)}")
+            exec("alter table ${t.name} add column ${colToSql(store, c)}")
           }
           else
           {
             // TODO: we do not not currently auto-update col schema
             // throw if schema mismatch
-            if (colToSql(c) != cur) throw Err("Column schema mismatch '${c.name}'")
+            if (colToSql(store, c) != cur) throw Err("Column schema mismatch '${c.name}'")
           }
         }
 
@@ -111,7 +111,7 @@ internal abstract const class StoreImpl
   }
 
   ** Return SQL schema for given 'CCol'.
-  abstract Str colToSql(CCol col)
+  abstract Str colToSql(CStore store, CCol col)
 
   ** Return SQL schema for given 'CConstraint'.
   abstract Str constraintToSql(CConstraint c)

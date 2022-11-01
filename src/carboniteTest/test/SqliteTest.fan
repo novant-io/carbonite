@@ -25,31 +25,38 @@ class SqliteTest : Test
 
   Void testColToSql()
   {
-    impl := makeImpl
+    store := makeStore
 
     // not null
-    verifyCol(impl, CCol("foo", Str#, [:]), "foo text not null")
-    verifyCol(impl, CCol("foo", Int#, [:]), "foo integer not null")
+    verifyCol(store, CCol("foo", Str#, [:]), "foo text not null")
+    verifyCol(store, CCol("foo", Int#, [:]), "foo integer not null")
 
     // nullable
-    verifyCol(impl, CCol("foo", Str?#, [:]), "foo text")
-    verifyCol(impl, CCol("foo", Int?#, [:]), "foo integer")
+    verifyCol(store, CCol("foo", Str?#, [:]), "foo text")
+    verifyCol(store, CCol("foo", Int?#, [:]), "foo integer")
 
     // primary key
-    verifyCol(impl, CCol("foo", Int#, ["primary_key":true]), "foo integer not null primary key")
+    verifyCol(store, CCol("foo", Int#, ["primary_key":true]), "foo integer not null primary key")
 
-    // primary key
-    verifyCol(impl, CCol("foo", Str#,  ["unique":true]), "foo text not null unique")
-    verifyCol(impl, CCol("foo", Str?#, ["unique":true]), "foo text unique")
+    // auto incremenet
+    // TODO
+
+    // unique
+    verifyCol(store, CCol("foo", Str#,  ["unique":true]), "foo text not null unique")
+    verifyCol(store, CCol("foo", Str?#, ["unique":true]), "foo text unique")
+
+    // foreign key
+    verifyCol(store, CCol("foo", Int#,  ["foreign_key":"bar(id)"]), "foo integer not null references bar(id)")
+    verifyCol(store, CCol("foo", Int?#, ["foreign_key":"bar(id)"]), "foo integer references bar(id)")
   }
 
-  private Obj makeImpl()
+  private CStore makeStore()
   {
-    Type.find("carbonite::SqliteStoreImpl").make([dbfile])
+    CStore.openSqlite(dbfile, [,])
   }
 
-  private Void verifyCol(Obj impl, CCol col, Str test)
+  private Void verifyCol(CStore store, CCol col, Str test)
   {
-    verifyEq(impl->colToSql(col), test)
+    verifyEq(store->impl->colToSql(store, col), test)
   }
 }
