@@ -9,15 +9,29 @@
 using carbonite
 
 *************************************************************************
-** PrimaryKeyTests
+** PrimaryKeyTestA
 *************************************************************************
 
-const class PrimaryKeyTests : CTable
+const class PrimaryKeyTestA : CTable
 {
-  override const Str name := "primary_key_tests"
+  override const Str name := "primary_key_test_a"
   override const CCol[] cols := [
     CCol("id",   Int#, ["primary_key":true]),
     CCol("name", Str#, [:]),
+  ]
+}
+
+*************************************************************************
+** PrimaryKeyTestB
+*************************************************************************
+
+const class PrimaryKeyTestB : CTable
+{
+  override const Str name := "primary_key_test_a"
+  override const CCol[] cols := [
+    CCol("foo_id", Str#, ["primary_key":true]),
+    CCol("bar_id", Str#, ["primary_key":true]),
+    CCol("name",   Str#, [:]),
   ]
 }
 
@@ -27,7 +41,7 @@ const class PrimaryKeyTests : CTable
 
 class PrimaryKeyTest : AbstractStoreTest
 {
-  const Type[] tables := [PrimaryKeyTests#]
+  const Type[] tables := [PrimaryKeyTestA#]
 
   ** Test creating rows with primary keys.
   Void testCreate()
@@ -35,7 +49,7 @@ class PrimaryKeyTest : AbstractStoreTest
     eachImpl(tables) |s|
     {
       // verify empty
-      CTable p := s.table(PrimaryKeyTests#)
+      CTable p := s.table(PrimaryKeyTestA#)
       verifyEq(p.size, 0)
 
       // add row using auto-increment
@@ -72,7 +86,7 @@ class PrimaryKeyTest : AbstractStoreTest
     eachImpl(tables) |s|
     {
       // verify existing
-      CTable p := s.table(PrimaryKeyTests#)
+      CTable p := s.table(PrimaryKeyTestA#)
       verifyEq(p.size, 4)
 
       // add another row using auto-increment

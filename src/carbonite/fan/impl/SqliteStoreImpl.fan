@@ -51,9 +51,6 @@ internal const class SqliteStoreImpl : StoreImpl
     // nullable
     if (!col.type.isNullable) sql.join("not null", " ")
 
-    // primary key
-    if (col.primaryKey) sql.join("primary key", " ")
-
     // unique
     if (col.meta["unique"] == true) sql.join("unique", " ")
 

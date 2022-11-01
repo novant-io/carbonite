@@ -35,8 +35,8 @@ class SqliteTest : Test
     verifyCol(impl, CCol("foo", Str?#, [:]), "foo text")
     verifyCol(impl, CCol("foo", Int?#, [:]), "foo integer")
 
-    // primary key
-    verifyCol(impl, CCol("foo", Int#, ["primary_key":true]), "foo integer not null primary key")
+    // primary key (we specify pkey as table constraint)
+    verifyCol(impl, CCol("foo", Int#, ["primary_key":true]), "foo integer not null")
 
     // primary key
     verifyCol(impl, CCol("foo", Str#,  ["unique":true]), "foo text not null unique")
