@@ -72,6 +72,11 @@ internal const class SqliteStoreImpl : StoreImpl
         cols := pk.cols.join(",")
         return "primary key (${cols})"
 
+      case CUniqueConstraint#:
+        CUniqueConstraint u := c
+        cols := u.cols.join(",")
+        return "unique (${cols})"
+
       default: throw SqlErr("Unknown constraint type ${c.typeof}")
     }
   }

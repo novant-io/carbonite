@@ -15,6 +15,9 @@ const class CConstraint
 {
   ** Create a primary key constraint for given column(s).
   static CConstraint primaryKey(Str[] cols) { CPKConstraint(cols) }
+
+  ** Create a unique constraint for given set of columns.
+  static CConstraint unique(Str[] cols) { CUniqueConstraint(cols) }
 }
 
 *************************************************************************
@@ -22,6 +25,19 @@ const class CConstraint
 *************************************************************************
 
 internal const class CPKConstraint : CConstraint
+{
+  ** Ctor.
+  new make(Str[] cols) { this.cols = cols }
+
+  ** Column for primary key or list of composite key.
+  const Str[] cols
+}
+
+*************************************************************************
+** CUniqueConstraint
+*************************************************************************
+
+internal const class CUniqueConstraint : CConstraint
 {
   ** Ctor.
   new make(Str[] cols) { this.cols = cols }
