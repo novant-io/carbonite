@@ -76,10 +76,10 @@ internal abstract const class StoreImpl
       store.tables.each |t|
       {
         // create table if not exist
-        clist := Str[,]
-        t.cols.each |c| { clist.add(colToSql(c)) }
-        clist.addAll(tableContraints(t))
-        cstr := clist.join(",")
+        cstr := Str[,]
+          .addAll(t.cols.map |c| { colToSql(c) })
+          .addAll(t.constraints.map |c| { constraintToSql(c) })
+          .join(",")
         exec("create table if not exists ${t.name} (${cstr})")
 
         // check if we need to add cols
@@ -113,6 +113,9 @@ internal abstract const class StoreImpl
   ** Return SQL schema for given 'CCol'.
   abstract Str colToSql(CCol col)
 
+  ** Return SQL schema for given 'CConstraint'.
+  abstract Str constraintToSql(CConstraint c)
+
   ** Return SQL value for given Fantom value and 'CCol'.
   abstract Obj fanToSql(CCol col, Obj fan)
 
@@ -124,22 +127,6 @@ internal abstract const class StoreImpl
 
   ** Effeciently return number of rows for given table.
   abstract Int tableSize(CTable table)
-
-  ** Return list of table containts for creating given table.
-  virtual Str[] tableContraints(CTable table)
-  {
-    acc := Str[,]
-
-    // primary key
-    pkeys := table.cols.findAll |c| { c.primaryKey }
-    if (pkeys.size > 0)
-    {
-      pkstr := pkeys.join(",") |c| { c.name }
-      acc.add("primary key (${pkstr})")
-    }
-
-    return acc
-  }
 
   ** Create a new record in sql database.
   virtual Void create(CTable table, Str:Obj fields)

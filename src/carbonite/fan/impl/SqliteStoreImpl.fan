@@ -51,10 +51,26 @@ internal const class SqliteStoreImpl : StoreImpl
     // nullable
     if (!col.type.isNullable) sql.join("not null", " ")
 
+    // primary key
+    if (col.primaryKey) sql.join("primary key", " ")
+
     // unique
     if (col.meta["unique"] == true) sql.join("unique", " ")
 
     return sql.toStr
+  }
+
+  override Str constraintToSql(CConstraint c)
+  {
+    switch (c.typeof)
+    {
+      case CPKConstraint#:
+        CPKConstraint pk := c
+        cols := pk.cols.join(",")
+        return "primary key (${cols})"
+
+      default: throw SqlErr("Unknown constraint type ${c.typeof}")
+    }
   }
 
   override Obj fanToSql(CCol col, Obj fan)

@@ -16,9 +16,12 @@ const class PrimaryKeyCompTestA : CTable
 {
   override const Str name := "primary_key_comp_test_a"
   override const CCol[] cols := [
-    CCol("foo_id", Int#, ["primary_key":true]),  // composite key
-    CCol("bar_id", Int#, ["primary_key":true]),  // composite key
+    CCol("foo_id", Int#, [:]),
+    CCol("bar_id", Int#, [:]),
     CCol("name",   Str#, [:]),
+  ]
+  override const CConstraint[] constraints := [
+    CConstraint.primaryKey(["foo_id", "bar_id"])
   ]
 }
 

@@ -21,6 +21,10 @@ abstract const class CTable
   ** Column names for this table.
   abstract CCol[] cols()
 
+  ** Table constraints for this table.
+  virtual CConstraint[] constraints() { CConstraint#.emptyList }
+
+  ** Str representation of this table.
   override Str toStr()
   {
     "table ${name} (" + (cols.join(", ") |c| { c.name }) + ")"
