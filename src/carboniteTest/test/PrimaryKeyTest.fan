@@ -27,11 +27,13 @@ const class PrimaryKeyTestA : CTable
 
 const class PrimaryKeyTestB : CTable
 {
-  override const Str name := "primary_key_test_a"
+  override const Str name := "primary_key_test_b"
   override const CCol[] cols := [
-    CCol("foo_id", Str#, ["primary_key":true]),
-    CCol("bar_id", Str#, ["primary_key":true]),
-    CCol("name",   Str#, [:]),
+    CCol("id",   Int#, [:]),
+    CCol("name", Str#, [:]),
+  ]
+  override const CConstraint[] constraints := [
+    CConstraint.primaryKey(["id"])
   ]
 }
 
@@ -41,11 +43,10 @@ const class PrimaryKeyTestB : CTable
 
 class PrimaryKeyTest : AbstractStoreTest
 {
-  const Type[] tables := [PrimaryKeyTestA#]
-
   ** Test creating rows with primary keys.
   Void testCreate()
   {
+    tables := [PrimaryKeyTestA#]
     eachImpl(tables) |s|
     {
       // verify empty
@@ -97,6 +98,31 @@ class PrimaryKeyTest : AbstractStoreTest
       verifyRec(p.listAll[2], ["id":5, "name":"Gamma"])
       verifyRec(p.listAll[3], ["id":6, "name":"Delta"])
       verifyRec(p.listAll[4], ["id":7, "name":"Epsilon"])
+    }
+  }
+
+  Void testConstraint()
+  {
+    tables := [PrimaryKeyTestB#]
+    eachImpl(tables) |s|
+    {
+      // verify empty
+      CTable p := s.table(PrimaryKeyTestB#)
+      verifyEq(p.size, 0)
+
+      // add row
+      p.create(["id":1, "name":"Alpha"])
+      verifyEq(p.size, 1)
+      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
+
+      // add another row
+      p.create(["id":2, "name":"Beta"])
+      verifyEq(p.size, 2)
+      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
+      verifyRec(p.listAll[1], ["id":2, "name":"Beta"])
+
+      // err collision
+      verifySqlErr { p.create(["id":2, "name":"ERR"]) }
     }
   }
 }
