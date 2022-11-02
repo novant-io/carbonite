@@ -96,7 +96,11 @@ internal abstract const class StoreImpl
           {
             // TODO: we do not not currently auto-update col schema
             // throw if schema mismatch
-            if (colToSql(store, c) != cur) throw Err("Column schema mismatch '${c.name}'")
+            if (colToSql(store, c) != cur)
+            {
+              x := colToSql(store, c)
+              throw Err("Column schema mismatch '${c.name}': ${cur} != ${x}")
+            }
           }
         }
 
