@@ -181,6 +181,15 @@ internal abstract const class StoreImpl
     exec("delete from ${table.name} where id = ${id}")
   }
 
+  ** Delete an existing record based on given 'where' clause.
+  virtual Void deleteBy(CTable table, Str:Obj where)
+  {
+    // TODO: make this DRY (see select)
+    cond := StrBuf()
+    where.each |v,n| { cond.join("${n} = @${n}", " and ") }
+    exec("delete from ${table.name} where ${cond}", where)
+  }
+
   // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
   ** Convert fantom valus to sql compat values.
   private Str:Obj? fieldsToSql(CTable table, Str:Obj? fan)

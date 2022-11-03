@@ -104,6 +104,11 @@ abstract const class CTable
     store.impl.delete(this, id)
   }
 
+  Void deleteBy(Str:Obj where)
+  {
+    store.impl.deleteBy(this, where)
+  }
+
   internal Void init(CStore store)
   {
     this.storeRef.val = store

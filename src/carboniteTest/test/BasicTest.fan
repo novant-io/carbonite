@@ -91,7 +91,7 @@ class BasicTest : Test
     verifyEq(e.listAll[0]->name, "Veronica Corningstone")
 
     // delete row
-    e.delete(2)
+    e.deleteBy(["name":"Veronica Corningstone"])
     verifyEq(e.size, 2)
     verifyEq(e.listAll[0]->name, "Brian Fantana")
 
