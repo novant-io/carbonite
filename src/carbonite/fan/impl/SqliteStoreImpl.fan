@@ -15,7 +15,7 @@ internal const class SqliteStoreImpl : StoreImpl
   new make(File file)
   {
     if (!file.exists) file.create
-    conn := makeConn("org.sqlite.JDBC", "jdbc:sqlite:${file.osPath}?foreign_keys=on", null, null)
+    conn := makeConn("org.sqlite.JDBC", "jdbc:sqlite:${file.osPath}?foreign_keys=on")
     this.connRef.val = Unsafe(conn)
   }
 
@@ -25,12 +25,6 @@ internal const class SqliteStoreImpl : StoreImpl
     rows  := (Row[])conn.sql(stmt).prepare.execute(["table":table])
     sql   := rows.first->sql.toStr
     return sql[sql.index("(")+1..-2].split(',')
-  }
-
-  override Int tableSize(CTable table)
-  {
-    r := exec("select count(1) from ${table.name}").first
-    return r.get(r.cols.first)
   }
 
   override Str colToSql(CStore store, CCol col)

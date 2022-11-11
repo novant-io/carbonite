@@ -7,6 +7,7 @@
 //
 
 using carbonite
+using concurrent
 
 *************************************************************************
 ** AbstractStoreTest
@@ -16,10 +17,21 @@ abstract class AbstractStoreTest : Test
 {
   private File sqliteFile := Env.cur.tempDir + `test.db`
 
+  private const Str dbname := "carbonite_test"
+  private const Str dbuser := "carbonite_test"
+  private const Str dbpass := "carbonite_pass"
+
   ** Start each test with fresh stores instances.
   override Void setup()
   {
+    // sqlite
     sqliteFile.delete
+
+    // postgres
+    Process { it.command=["dropdb", "-f", "--if-exists", dbname] }.run
+    Actor.sleep(100ms)
+    Process { it.command=["bash", "-c", "psql postgres -U ${dbuser} -c 'create database ${dbname}'" ]}.run
+    Actor.sleep(100ms)
   }
 
   **
@@ -29,9 +41,29 @@ abstract class AbstractStoreTest : Test
   **
   Void eachImpl(Obj[] tables, |CStore store| func)
   {
-    // TODO FIXIT: just sqlite for now
-    s := CStore.openSqlite(sqliteFile, tables)
-    func(s)
+    // sqlite
+    echo("   Impl: sqlite   $tables")
+    store := CStore.openSqlite(sqliteFile, tables)
+    try func(store)
+    finally store.close
+
+    // postgres
+    echo("   Impl: postgres $tables")
+    store = CStore.openPostgres("localhost", dbname, dbuser, dbpass, tables)
+    try func(store)
+    finally store.close
+  }
+
+  **
+  ** Test each database impl throws SqlErr.
+  **
+  Void eachImplErr(Obj[] tables)
+  {
+    echo("   Impl: sqlite   $tables")
+    verifySqlErr |->| { x := CStore.openSqlite(sqliteFile, tables) }
+
+    echo("   Impl: postgres $tables")
+    verifySqlErr |->| { x := CStore.openPostgres("localhost", dbname, dbuser, dbpass, tables) }
   }
 
   ** Verify that the given rec instance matches the given tag list.

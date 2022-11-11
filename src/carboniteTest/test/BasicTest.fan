@@ -12,102 +12,103 @@ using carbonite
 ** BasicTest
 *************************************************************************
 
-class BasicTest : Test
+class BasicTest : AbstractStoreTest
 {
-  private File dbfile := Env.cur.tempDir + `test.db`
-  override Void setup() { dbfile.delete }
-
   Void testBasics()
   {
-    // empty
-    ds := CStore.openSqlite(dbfile, [Employees#])
-    verifyEq(ds.tables.size, 1)
-    verifyEq(ds.table(Employees#).size, 0)
-    verifyEq(ds.table(Employees#).listAll.size, 0)
+    eachImpl([Employees#]) |ds|
+    {
+      // empty
+      verifyEq(ds.tables.size, 1)
+      verifyEq(ds.table(Employees#).size, 0)
+      verifyEq(ds.table(Employees#).listAll.size, 0)
 
-    // add rows
-    CTable e := ds.table(Employees#)
-    e.create(["id":1, "name":"Ron Burgundy",          "pos":"lead"])
-    e.create(["id":2, "name":"Veronica Corningstone", "pos":"lead"])
-    e.create(["id":3, "name":"Brian Fantana",         "pos":"sports"])
-    e.create(["id":4, "name":"Brick Tamland",         "pos":"weather"])
-    verifyEq(e.size, 4)
-    verifyEq(ds.table(Employees#).size, 4)
-    verifyEq(ds.table(Employees#).listAll.size, 4)
-    verifyEq(e.listAll[0]->name, "Ron Burgundy")
-    verifyEq(e.listAll[2]->name, "Brian Fantana")
+      // add rows
+      CTable e := ds.table(Employees#)
+      e.create(["id":1, "name":"Ron Burgundy",          "pos":"lead"])
+      e.create(["id":2, "name":"Veronica Corningstone", "pos":"lead"])
+      e.create(["id":3, "name":"Brian Fantana",         "pos":"sports"])
+      e.create(["id":4, "name":"Brick Tamland",         "pos":"weather"])
+      verifyEq(e.size, 4)
+      verifyEq(ds.table(Employees#).size, 4)
+      verifyEq(ds.table(Employees#).listAll.size, 4)
+      verifyEq(e.listAll[0]->name, "Ron Burgundy")
+      verifyEq(e.listAll[2]->name, "Brian Fantana")
 
-    // get
-    verifyEq(e.get(2)->name, "Veronica Corningstone")
-    verifyEq(e.get(5), null)
+      // get
+      verifyEq(e.get(2)->name, "Veronica Corningstone")
+      verifyEq(e.get(5), null)
 
-    // getBy
-    verifyEq(e.getBy(["pos":"weather"])->name,      "Brick Tamland")
-    verifyEq(e.getBy(["pos":"lead"])->name,         "Ron Burgundy")
-    verifyEq(e.getBy(["pos":"lead", "id":2])->name, "Veronica Corningstone")
+      // getBy
+      verifyEq(e.getBy(["pos":"weather"])->name,      "Brick Tamland")
+      verifyEq(e.getBy(["pos":"lead"])->name,         "Ron Burgundy")
+      verifyEq(e.getBy(["pos":"lead", "id":2])->name, "Veronica Corningstone")
 
-    // list
-    verifyEq(e.listAll.size, 4)
-    verifyEq(e.listBy(["pos":"lead"]).size, 2)
-    verifyEq(e.listBy(["pos":"lead", "name":"Ron Burgundy"]).size, 1)
-    verifyEq(e.listBy(["pos":"lead", "name":"No one"]).size, 0)
+      // list
+      verifyEq(e.listAll.size, 4)
+      verifyEq(e.listBy(["pos":"lead"]).size, 2)
+      verifyEq(e.listBy(["pos":"lead", "name":"Ron Burgundy"]).size, 1)
+      verifyEq(e.listBy(["pos":"lead", "name":"No one"]).size, 0)
 
-    // close and verify fail
-    ds.close
-    verifyErr(Type.find("carbonite::SqlErr")) { x := ds.table(Employees#).size }
+      // close and verify fail
+      ds.close
+      verifySqlErr { x := ds.table(Employees#).size }
+    }
 
-    // add columns
-    ds.close
-    ds = CStore.openSqlite(dbfile, [Employees2#])
-    verifyEq(ds.tables.size, 1)
-    e = ds.table(Employees2#)
-    verifyEq(e.size, 4)
-    verifyEq(e.listAll[0]->name, "Ron Burgundy")
-    verifyEq(e.listAll[0]->new_column, null)
+    // re-open new schema and nullable new col
+    eachImpl([Employees2#]) |ds|
+    {
+      // add columns
+      verifyEq(ds.tables.size, 1)
+      e := ds.table(Employees2#)
+      verifyEq(e.size, 4)
+      verifyEq(e.listAll[0]->name, "Ron Burgundy")
+      verifyEq(e.listAll[0]->new_column, null)
 
-    // update and reset nullable column
-    e.update(1, ["new_column":52])
-    verifyEq(e.listAll[0]->new_column, 52)
-    e.update(1, ["new_column":null])
-    verifyEq(e.listAll[0]->new_column, null)
+      // update and reset nullable column
+      e.update(1, ["new_column":52])
+      verifyEq(e.get(1)->new_column, 52)
+      e.update(1, ["new_column":null])
+      verifyEq(e.get(1)->new_column, null)
 
-    // add non-null column with no default value
-    ds.close
-    verifyErr(Err#) { ds = CStore.openSqlite(dbfile, [EmployeesErr3#]) }
+      // update row
+      verifyEq(e.get(1)->name, "Ron Burgundy")
+      e.update(1, ["name":"Ronnie Burgie"])
+      verifyEq(e.get(1)->name, "Ronnie Burgie")
+      e.update(4, ["name":"Bricky", "pos":"lead"])
+      verifyEq(e.get(4)->name, "Bricky")
+      verifyEq(e.get(4)->pos,  "lead")
+    }
 
-    // schema mismatch
-    ds.close
-    verifyErr(Err#) { ds = CStore.openSqlite(dbfile, [EmployeesErr4#]) }
+    // re-open new schema and non-null with no default value
+    eachImplErr([EmployeesErr3#])
 
-    // update row
-    ds.close
-    ds = CStore.openSqlite(dbfile, [Employees#])
-    e  = ds.table(Employees#)
-    verifyEq(e.listAll[0]->name, "Ron Burgundy")
-    e.update(1, ["name":"Ronnie Burgie"])
-    verifyEq(e.listAll[0]->name, "Ronnie Burgie")
-    e.update(4, ["name":"Bricky", "pos":"lead"])
-    verifyEq(e.listAll[3]->name, "Bricky")
-    verifyEq(e.listAll[3]->pos,  "lead")
+    // re-open with schema mismatch
+    eachImplErr([EmployeesErr4#])
 
-    // delete row
-    verifyEq(e.size, 4)
-    e.delete(1)
-    verifyEq(e.size, 3)
-    verifyEq(e.listAll[0]->name, "Veronica Corningstone")
+    // test deletes
+    eachImpl([Employees#]) |ds|
+    {
+      // delete row
+      e := ds.table(Employees#)
+      verifyEq(e.size, 4)
+      e.delete(1)
+      verifyEq(e.size, 3)
+      verifyEq(e.listAll[0]->name, "Veronica Corningstone")
 
-    // delete row
-    e.deleteBy(["name":"Veronica Corningstone"])
-    verifyEq(e.size, 2)
-    verifyEq(e.listAll[0]->name, "Brian Fantana")
+      // delete row
+      e.deleteBy(["name":"Veronica Corningstone"])
+      verifyEq(e.size, 2)
+      verifyEq(e.listAll[0]->name, "Brian Fantana")
 
-    // delete row
-    e.delete(3)
-    verifyEq(e.size, 1)
-    verifyEq(e.listAll[0]->name, "Bricky")
+      // delete row
+      e.delete(3)
+      verifyEq(e.size, 1)
+      verifyEq(e.listAll[0]->name, "Bricky")
 
-    // delete row
-    e.delete(4)
-    verifyEq(e.size, 0)
+      // delete row
+      e.delete(4)
+      verifyEq(e.size, 0)
+    }
   }
 }

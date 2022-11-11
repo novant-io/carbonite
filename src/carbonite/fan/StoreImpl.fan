@@ -16,7 +16,7 @@ using [java] java.lang::Class as JClass
 internal abstract const class StoreImpl
 {
   ** Create SqlConn instance for given driver and connection info.
-  protected SqlConn makeConn(Str jdbc, Str conn, Str? user, Str? pass)
+  protected SqlConn makeConn(Str jdbc, Str conn) //, Str? user, Str? pass)
   {
     // repload JDBC driver.
     try { JClass.forName(jdbc) }
@@ -27,7 +27,7 @@ internal abstract const class StoreImpl
         ? Err("${jdbc} driver not found")
         : err
     }
-    return SqlConn.open(conn, null, null)
+    return SqlConn.open(conn, null, null) //user, pass)
   }
 
   // TODO FIXIT: move const-ness down into SqlXxx methods
@@ -110,7 +110,7 @@ internal abstract const class StoreImpl
     }
     catch (Err err)
     {
-      throw Err("Update schema failed", err)
+      throw SqlErr("Update schema failed", err)
     }
   }
 
@@ -130,7 +130,11 @@ internal abstract const class StoreImpl
   abstract Str[] describeTable(Str table)
 
   ** Effeciently return number of rows for given table.
-  abstract Int tableSize(CTable table)
+  virtual Int tableSize(CTable table)
+  {
+    r := exec("select count(1) from ${table.name}").first
+    return r.get(r.cols.first)
+  }
 
   ** Create a new record in sql database.
   virtual Void create(CTable table, Str:Obj fields)

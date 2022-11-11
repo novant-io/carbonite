@@ -20,6 +20,13 @@ const class CStore
     return init(impl, tables)
   }
 
+  ** Return a new CarbonStore for the given postgres connection and table schema.
+  static CStore openPostgres(Str dbhost, Str dbname, Str username, Str password, Obj[] tables)
+  {
+    impl := PostgresStoreImpl(dbhost, dbname, username, password)
+    return init(impl, tables)
+  }
+
   ** Initialize CStore.
   private static CStore init(StoreImpl impl, Obj[] tables)
   {
