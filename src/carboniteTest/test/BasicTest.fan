@@ -65,6 +65,12 @@ class BasicTest : Test
     verifyEq(e.listAll[0]->name, "Ron Burgundy")
     verifyEq(e.listAll[0]->new_column, null)
 
+    // update and reset nullable column
+    e.update(1, ["new_column":52])
+    verifyEq(e.listAll[0]->new_column, 52)
+    e.update(1, ["new_column":null])
+    verifyEq(e.listAll[0]->new_column, null)
+
     // add non-null column with no default value
     ds.close
     verifyErr(Err#) { ds = CStore.openSqlite(dbfile, [EmployeesErr3#]) }

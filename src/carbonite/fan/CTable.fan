@@ -85,15 +85,18 @@ abstract const class CTable
 
   ** Update existing record in this table with given field values and
   ** return the new record instance.
-  Void /*CRec*/ update(Int id, Str:Obj fields)
+  Void /*CRec*/ update(Int id, Str:Obj? fields)
   {
     // verify field cols
     fields.each |v,k|
     {
+      // validate field is col
       c := cmap[k]
       if (c == null) throw ArgErr("Field not a column: '${k}'")
 
-      // TODO: check nullable
+      // check null
+      if (v == null && !c.type.isNullable)
+        throw ArgErr("Column cannot be null '${c.name}'")
     }
     store.impl.update(this, id, fields)
   }

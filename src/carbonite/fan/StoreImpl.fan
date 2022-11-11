@@ -168,7 +168,7 @@ internal abstract const class StoreImpl
   }
 
   ** Update an existing record in sql database.
-  virtual Void update(CTable table, Int id, Str:Obj fields)
+  virtual Void update(CTable table, Int id, Str:Obj? fields)
   {
     assign := fields.keys.join(",") |n| { "${n} = @${n}" }
     exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
