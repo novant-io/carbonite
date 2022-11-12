@@ -81,8 +81,8 @@ internal const class PostgresStoreImpl : StoreImpl
     {
       case Str#:      sql.join("text",   " ")
       case Int#:      sql.join("bigint", " ")
-      // case Date#:     sql.join("integer", " ")
-      // case DateTime#: sql.join("integer", " ")
+      case Date#:     sql.join("date",   " ")
+      case DateTime#: sql.join("timestamp without time zone", " ")
       default:        throw ArgErr("Unsupported col type '${col.type}'")
     }
 
@@ -149,16 +149,11 @@ internal const class PostgresStoreImpl : StoreImpl
     {
       case Str#:  return fan
       case Int#:  return fan
-      // case Date#:
-      //   Date d := fan
-      //   y := d.year
-      //   m := d.month.ordinal+1
-      //   a := d.day
-      //   return y.shiftl(16).or(m.shiftl(8)).or(a)
-
-      // case DateTime#:
-      //   DateTime d := fan
-      //   return d.toUtc.ticks
+      case Date#: return fan
+      case DateTime#:
+        // TODO: move this into SqlUtil to avoid conversion here
+        DateTime d := fan
+        return d.toUtc
 
       default: throw ArgErr("Unsupported col type '${col.type}'")
     }
@@ -166,19 +161,6 @@ internal const class PostgresStoreImpl : StoreImpl
 
   override Obj sqlToFan(CCol col, Obj sql)
   {
-    switch (col.type.toNonNullable)
-    {
-      // case Date#:
-      //   Int v := sql
-      //   y := v.shiftr(16).and(0xffff)
-      //   m := v.shiftr(8).and(0xff)
-      //   d := v.and(0xff)
-      //   return Date(y, Month.vals[m-1], d)
-
-      // case DateTime#:
-      //   return DateTime.makeTicks(sql, TimeZone.utc)
-
-      default: return sql
-    }
+    return sql
   }
 }

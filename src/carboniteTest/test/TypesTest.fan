@@ -12,55 +12,81 @@ using carbonite
 ** TypesTest
 *************************************************************************
 
-class TypesTest : Test
+class TypesTest : AbstractStoreTest
 {
+  const Type[] tables := [Types#]
+
   private File dbfile := Env.cur.tempDir + `test.db`
   override Void setup()
   {
-    dbfile.delete
-    this.db = CStore.openSqlite(dbfile, [Types#])
-    this.t  = db.table(Types#)
-    this.t.create(["id":1])
+    super.setup
+    eachImpl(tables) |s| { s.table(Types#).create(["id":1]) }
   }
-  private CStore? db
-  private CTable? t
-  private CRec rec() { t.listAll.first }
-  private Void update(Str:Obj map) { t.update(1, map) }
 
   Void testStr()
   {
-    verifyEq(rec->str, null)
-    update(["str":"foo bar"])
-    verifyEq(rec->str, "foo bar")
-    verifyEq(rec.getStr("str"), "foo bar")
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->str, null)
+      t.update(1, ["str":"foo bar"])
+
+      r = t.get(1)
+      verifyEq(r->str, "foo bar")
+      verifyEq(r.getStr("str"), "foo bar")
+    }
   }
 
   Void testInt()
   {
-    verifyEq(rec->int, null)
-    update(["int":25])
-    verifyEq(rec->int, 25)
-    verifyEq(rec.getInt("int"), 25)
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->int, null)
+      t.update(1, ["int":25])
+
+      r = t.get(1)
+      verifyEq(r->int, 25)
+      verifyEq(r.getInt("int"), 25)
+    }
   }
 
   Void testDate()
   {
-    verifyEq(rec->date, null)
-    d := Date("2022-08-03")
-    update(["date":d])
-    verifyEq(rec->date, d)
-    verifyEq(rec.getDate("date"), d)
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      d := Date("2022-08-03")
+
+      verifyEq(r->date, null)
+      t.update(1, ["date":d])
+
+      r = t.get(1)
+      verifyEq(r->date, d)
+      verifyEq(r.getDate("date"), d)
+    }
   }
 
   Void testDateTime()
   {
-    verifyEq(rec->datetime, null)
-    dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
-    ny := TimeZone("New_York")
-    update(["datetime":dt])
-    verifyEq(rec->datetime, dt)
-    verifyEq(rec->datetime.toStr, "2022-08-03T19:27:47Z UTC")
-    verifyEq(rec.getDateTime("datetime"), dt)
-    verifyEq(rec.getDateTime("datetime", ny).toStr, "2022-08-03T15:27:47-04:00 New_York")
+    eachImpl(tables) |s|
+    {
+      dt := DateTime("2022-08-03T15:27:47-04:00 New_York")
+      ny := TimeZone("New_York")
+
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->datetime, null)
+
+      t.update(1, ["datetime":dt])
+      r = t.get(1)
+      verifyEq(r->datetime, dt)
+      verifyEq(r->datetime.toStr, "2022-08-03T19:27:47Z UTC")
+      verifyEq(r.getDateTime("datetime"), dt)
+      verifyEq(r.getDateTime("datetime", ny).toStr, "2022-08-03T15:27:47-04:00 New_York")
+    }
   }
 }

@@ -291,11 +291,12 @@ public class SqlUtil
       throws SQLException
     {
       Object v = rs.getObject(col);
+      if (v == null) return null;
       if (v instanceof java.sql.Timestamp)
       {
         java.sql.Timestamp ts = rs.getTimestamp(col);
         if (rs.wasNull()) return null;
-        return DateTime.fromJava(ts.getTime());
+        return DateTime.fromJava(ts.getTime(), fan.sys.TimeZone.utc());
       }
       System.out.println(">>> " + "Unsupported DATETIME type '" + v.getClass() + "'");
       throw new java.sql.SQLException("Unsupported DATETIME type '" + v.getClass() + "'");
@@ -309,6 +310,7 @@ public class SqlUtil
       throws SQLException
     {
       Object v = rs.getObject(col);
+      if (v == null) return null;
       if (v instanceof java.sql.Date)
       {
         java.sql.Date d = rs.getDate(col);
