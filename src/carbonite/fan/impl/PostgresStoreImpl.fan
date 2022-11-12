@@ -58,14 +58,28 @@ internal const class PostgresStoreImpl : StoreImpl
 
   override Str[] describeTable(Str table)
   {
-    stmt  := "select * from information_schema.columns where table_name = @table"
-    rows  := (Row[])conn.sql(stmt).prepare.execute(["table":table])
-    return rows.map |r->Str|
+    stmt := "select * from information_schema.columns where table_name = @table"
+    colmeta := (Row[])conn.sql(stmt).prepare.execute(["table":table])
+
+    stmt = "select * from pg_indexes where tablename = @table"
+    indexes := (Row[])conn.sql(stmt).prepare.execute(["table":table])
+
+    return colmeta.map |r->Str|
     {
+      // core col meta
       buf := StrBuf()
       buf.join(r->column_name)
       buf.join(r->data_type, " ")
       if (r->is_nullable == "NO") buf.join("not null", " ")
+
+      // check for index
+      ix := indexes.find |i| { i->indexdef.toStr.endsWith("(${r->column_name})") }
+      if (ix != null)
+      {
+        def := ix->indexdef.toStr
+        if (def.startsWith("CREATE UNIQUE")) buf.join("unique", " ")
+      }
+
       // echo("> $buf")
       return buf.toStr
     }
@@ -89,32 +103,32 @@ internal const class PostgresStoreImpl : StoreImpl
     // nullable
     if (!col.type.isNullable) sql.join("not null", " ")
 
-    // // apply meta
-    // col.meta.each |val, key|
-    // {
-    //   switch (key)
-    //   {
-    //     case "primary_key":
-    //       if (val == true) sql.join("primary key", " ")
-    //       else throw ArgErr("invalid priamry_value '${val}'")
+    // apply meta
+    col.meta.each |val, key|
+    {
+      switch (key)
+      {
+        // case "primary_key":
+        //   if (val == true) sql.join("primary key", " ")
+        //   else throw ArgErr("invalid priamry_value '${val}'")
 
-    //     case "auto_increment":
-    //       if (val == true) sql.join("autoincrement", " ")
-    //       else throw ArgErr("invalid auto_increment '${val}'")
+        // case "auto_increment":
+        //   if (val == true) sql.join("autoincrement", " ")
+        //   else throw ArgErr("invalid auto_increment '${val}'")
 
-    //     case "unique":
-    //       if (val == true) sql.join("unique", " ")
-    //       else throw ArgErr("invalid unique '${val}'")
+        case "unique":
+          if (val == true) sql.join("unique", " ")
+          else throw ArgErr("invalid unique '${val}'")
 
-    //     case "foreign_key":
-    //       fk := val
-    //       if (fk is Type) fk = "${store.table(fk).name}(id)"
-    //       if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
-    //       sql.join("references ${fk}", " ")
+        // case "foreign_key":
+        //   fk := val
+        //   if (fk is Type) fk = "${store.table(fk).name}(id)"
+        //   if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
+        //   sql.join("references ${fk}", " ")
 
-    //     default: throw ArgErr("unknown col meta '${key}'")
-    //   }
-    // }
+        default: throw ArgErr("unknown col meta '${key}'")
+      }
+    }
 
     // echo("+ $sql")
     return sql.toStr
