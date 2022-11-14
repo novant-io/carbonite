@@ -30,7 +30,7 @@ internal const class SqliteStoreImpl : StoreImpl
   override Str colToSql(CStore store, CCol col)
   {
     sql := StrBuf()
-    sql.add(col.name)
+    sql.add("\"${col.name}\"")
 
     // base type
     switch (col.type.toNonNullable)

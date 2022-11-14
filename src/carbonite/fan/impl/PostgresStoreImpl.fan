@@ -39,7 +39,7 @@ internal const class PostgresStoreImpl : StoreImpl
 
       // core col meta
       buf := StrBuf()
-      buf.join(s->column_name)
+      buf.join("\"${s->column_name}\"")
       buf.join(type, " ")
       if (s->is_nullable == "NO") buf.join("not null", " ")
 
@@ -77,7 +77,7 @@ internal const class PostgresStoreImpl : StoreImpl
   override Str colToSql(CStore store, CCol col)
   {
     sql := StrBuf()
-    sql.add(col.name)
+    sql.addChar('\"').add(col.name).addChar('\"')
 
     // auto_inc trumps base type
     if (col.meta["auto_increment"] == true)

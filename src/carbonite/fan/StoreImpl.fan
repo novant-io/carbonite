@@ -86,7 +86,7 @@ internal abstract const class StoreImpl
         has := describeTable(t)
         t.cols.each |c|
         {
-          cur := has.find |h| { h.startsWith("${c.name} ") }
+          cur := has.find |h| { h.startsWith("\"${c.name}\" ") }
           if (cur == null)
           {
             // add missing column

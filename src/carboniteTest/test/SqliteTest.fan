@@ -28,26 +28,26 @@ class SqliteTest : Test
     store := makeStore
 
     // not null
-    verifyCol(store, CCol("foo", Str#, [:]), "foo text not null")
-    verifyCol(store, CCol("foo", Int#, [:]), "foo integer not null")
+    verifyCol(store, CCol("foo", Str#, [:]), "\"foo\" text not null")
+    verifyCol(store, CCol("foo", Int#, [:]), "\"foo\" integer not null")
 
     // nullable
-    verifyCol(store, CCol("foo", Str?#, [:]), "foo text")
-    verifyCol(store, CCol("foo", Int?#, [:]), "foo integer")
+    verifyCol(store, CCol("foo", Str?#, [:]), "\"foo\" text")
+    verifyCol(store, CCol("foo", Int?#, [:]), "\"foo\" integer")
 
     // primary key
-    verifyCol(store, CCol("foo", Int#, ["primary_key":true]), "foo integer not null primary key")
+    verifyCol(store, CCol("foo", Int#, ["primary_key":true]), "\"foo\" integer not null primary key")
 
     // auto incremenet
     // TODO
 
     // unique
-    verifyCol(store, CCol("foo", Str#,  ["unique":true]), "foo text not null unique")
-    verifyCol(store, CCol("foo", Str?#, ["unique":true]), "foo text unique")
+    verifyCol(store, CCol("foo", Str#,  ["unique":true]), "\"foo\" text not null unique")
+    verifyCol(store, CCol("foo", Str?#, ["unique":true]), "\"foo\" text unique")
 
     // foreign key
-    verifyCol(store, CCol("foo", Int#,  ["foreign_key":"bar(id)"]), "foo integer not null references bar(id)")
-    verifyCol(store, CCol("foo", Int?#, ["foreign_key":"bar(id)"]), "foo integer references bar(id)")
+    verifyCol(store, CCol("foo", Int#,  ["foreign_key":"bar(id)"]), "\"foo\" integer not null references bar(id)")
+    verifyCol(store, CCol("foo", Int?#, ["foreign_key":"bar(id)"]), "\"foo\" integer references bar(id)")
 
     // unknown keys
     verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["some_key":true])) }
