@@ -53,7 +53,7 @@ abstract const class CTable
       if (c.scopedBy == null) return
       sn := c.scopedBy
       sv := fields[sn]
-      mv := store.impl.select(this, c.name, [sn:sv]).max |r| { r.getInt(sn) }
+      mv := store.impl.select(this, c.name, [sn:sv]).max |a,b| { a.getInt(c.name) <=> b.getInt(c.name) }
       nv := mv == null ? 1 : mv.getInt(c.name)+1
       fields[c.name] = nv
     }
