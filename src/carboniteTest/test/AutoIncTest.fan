@@ -76,6 +76,29 @@ class AutoIncTest : AbstractStoreTest
       verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
       verifyRec(p.listAll[1], ["id":3, "name":"Gamma"])
       verifyRec(p.listAll[2], ["id":4, "name":"Delta"])
+
+      // explicit id
+      p.create(["id":7, "name":"Epsilon"])
+      verifyEq(p.size, 4)
+      verifyRec(p.listAll[0], ["id":1,  "name":"Alpha"])
+      verifyRec(p.listAll[1], ["id":3,  "name":"Gamma"])
+      verifyRec(p.listAll[2], ["id":4,  "name":"Delta"])
+      verifyRec(p.listAll[3], ["id":7, "name":"Epsilon"])
+
+      // TODO: should we prevent explict ids with auto_inc is specified?
+      //       postgres will not account for out-of-order and generate a
+      //       duplicate id and collision
+      // verify next
+      p.create(["name":"Zeta"])
+      verifyEq(p.size, 5)
+      verifyRec(p.listAll[3], ["id":7, "name":"Epsilon"])
+      r := p.listAll[4]
+      verify(r->id == 5 || r->id == 8)
+
+      // p.create(["name":"x1"])
+      // p.create(["name":"x2"])
+      // p.create(["name":"x3"])
+      // p.listAll.each |x| { echo("> $x") }
     }
   }
 }
