@@ -122,6 +122,11 @@ internal const class PostgresStoreImpl : StoreImpl
           if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
           sql.join("references ${fk}", " ")
 
+        case "scoped_by":
+          // TODO FIXIT: verify col exists in table
+          // verify auto_increment
+          if (col.meta["auto_increment"] != true) throw ArgErr("auto_increment required")
+
         default: throw ArgErr("unknown col meta '${key}'")
       }
     }

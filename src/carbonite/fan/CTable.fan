@@ -47,6 +47,17 @@ abstract const class CTable
       if (c == null) throw ArgErr("Field not a column: '${k}'")
     }
 
+    // generate scoped ids
+    cols.each |c|
+    {
+      if (c.scopedBy == null) return
+      sn := c.scopedBy
+      sv := fields[sn]
+      mv := store.impl.select(this, c.name, [sn:sv]).max |r| { r.getInt(sn) }
+      nv := mv == null ? 1 : mv.getInt(c.name)+1
+      fields[c.name] = nv
+    }
+
     // check non-nullable cols
     cmap.vals.each |c|
     {
@@ -116,6 +127,10 @@ abstract const class CTable
   {
     this.storeRef.val = store
     this.cmapRef.val  = Str:CCol[:].setList(cols) |c| { c.name }.toImmutable
+  }
+
+  private Void genScopedIds(Str:Obj? ids)
+  {
   }
 
   private CStore store() { storeRef.val }

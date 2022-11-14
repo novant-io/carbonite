@@ -50,6 +50,9 @@ internal const class SqliteStoreImpl : StoreImpl
     {
       switch (key)
       {
+        // picked up with pk/scoped
+        case "auto_increment": return
+
         case "primary_key":
           if (val == true) sql.join("primary key", " ")
           else throw ArgErr("invalid priamry_value '${val}'")
@@ -62,18 +65,21 @@ internal const class SqliteStoreImpl : StoreImpl
             else throw ArgErr("invalid auto_increment '${av}'")
           }
 
-        // picked up with pk
-        case "auto_increment": return
-
         case "unique":
           if (val == true) sql.join("unique", " ")
           else throw ArgErr("invalid unique '${val}'")
 
         case "foreign_key":
+        // TODO FIXIT: verify table exists in store
           fk := val
           if (fk is Type) fk = "${store.table(fk).name}(id)"
           if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
           sql.join("references ${fk}", " ")
+
+        case "scoped_by":
+          // TODO FIXIT: verify col exists in table
+          // verify auto_increment
+          if (col.meta["auto_increment"] != true) throw ArgErr("auto_increment required")
 
         default: throw ArgErr("unknown col meta '${key}'")
       }

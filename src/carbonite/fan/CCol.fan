@@ -20,6 +20,8 @@ const class CCol
     this.type = type
     this.meta = meta
     this.primaryKey = meta["primary_key"] == true
+    this.scopedBy   = meta["scoped_by"]
+
   }
 
   ** Name of this column.
@@ -33,6 +35,9 @@ const class CCol
 
   ** Is this column a primary key?
   const Bool primaryKey
+
+  ** Column this instance is scoped by or 'null' for none.
+  const Str? scopedBy
 
   override Str toStr() { name }
 }
