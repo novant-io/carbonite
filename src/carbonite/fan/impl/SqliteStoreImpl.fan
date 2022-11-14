@@ -54,9 +54,16 @@ internal const class SqliteStoreImpl : StoreImpl
           if (val == true) sql.join("primary key", " ")
           else throw ArgErr("invalid priamry_value '${val}'")
 
-        case "auto_increment":
-          if (val == true) sql.join("autoincrement", " ")
-          else throw ArgErr("invalid auto_increment '${val}'")
+          // only apply auto_inc if pk was specified
+          av := col.meta["auto_increment"]
+          if (av != null)
+          {
+            if (av == true) sql.join("autoincrement", " ")
+            else throw ArgErr("invalid auto_increment '${av}'")
+          }
+
+        // picked up with pk
+        case "auto_increment": return
 
         case "unique":
           if (val == true) sql.join("unique", " ")
@@ -72,6 +79,7 @@ internal const class SqliteStoreImpl : StoreImpl
       }
     }
 
+    // echo("+ $sql")
     return sql.toStr
   }
 

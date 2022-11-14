@@ -32,10 +32,15 @@ internal const class PostgresStoreImpl : StoreImpl
 
     return colschema.map |s->Str|
     {
+      // serial trumps data_type
+      type   := s->data_type
+      colDef := s->column_default?.toStr ?: ""
+      if (colDef.startsWith("nextval(")) type = "serial"
+
       // core col meta
       buf := StrBuf()
       buf.join(s->column_name)
-      buf.join(s->data_type, " ")
+      buf.join(type, " ")
       if (s->is_nullable == "NO") buf.join("not null", " ")
 
       // check for constraints
@@ -59,7 +64,7 @@ internal const class PostgresStoreImpl : StoreImpl
         }
       }
 
-      echo("> $buf")
+      // echo("> $buf")
       return buf.toStr
     }
   }
@@ -69,14 +74,22 @@ internal const class PostgresStoreImpl : StoreImpl
     sql := StrBuf()
     sql.add(col.name)
 
-    // base type
-    switch (col.type.toNonNullable)
+    // auto_inc trumps base type
+    if (col.meta["auto_increment"] == true)
     {
-      case Str#:      sql.join("text",   " ")
-      case Int#:      sql.join("bigint", " ")
-      case Date#:     sql.join("date",   " ")
-      case DateTime#: sql.join("timestamp without time zone", " ")
-      default:        throw ArgErr("Unsupported col type '${col.type}'")
+      sql.join("serial", " ")
+    }
+    else
+    {
+      // base type
+      switch (col.type.toNonNullable)
+      {
+        case Str#:      sql.join("text",   " ")
+        case Int#:      sql.join("bigint", " ")
+        case Date#:     sql.join("date",   " ")
+        case DateTime#: sql.join("timestamp without time zone", " ")
+        default:        throw ArgErr("Unsupported col type '${col.type}'")
+      }
     }
 
     // nullable
@@ -91,9 +104,8 @@ internal const class PostgresStoreImpl : StoreImpl
           if (val == true) sql.join("primary key", " ")
           else throw ArgErr("invalid priamry_value '${val}'")
 
-        // case "auto_increment":
-        //   if (val == true) sql.join("autoincrement", " ")
-        //   else throw ArgErr("invalid auto_increment '${val}'")
+        // picked up in base type
+        case "auto_increment": return
 
         case "unique":
           if (val == true) sql.join("unique", " ")
