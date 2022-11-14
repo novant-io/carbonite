@@ -19,68 +19,47 @@ internal const class PostgresStoreImpl : StoreImpl
     this.connRef.val = Unsafe(conn)
   }
 
-    /*
-    table_catalog,
-    table_schema,
-    table_name,
-    column_name,
-    ordinal_position,
-    column_default,
-    is_nullable,
-    data_type,
-    character_maximum_length,
-    character_octet_length,
-    numeric_precision,
-    numeric_precision_radix,
-    numeric_scale,
-    datetime_precision,
-    interval_type,
-    interval_precision,
-    character_set_catalog,
-    character_set_schema,
-    character_set_name,
-    collation_catalog,
-    collation_schema,
-    collation_name,
-    domain_catalog,
-    domain_schema,
-    domain_name,
-    udt_catalog,
-    udt_schema,
-    udt_name,
-    scope_catalog,
-    scope_schema, scope_name, maximum_cardinality, dtd_identifier,
-    is_self_referencing, is_identity, identity_generation,
-    identity_start, identity_increment, identity_maximum,
-    identity_minimum, identity_cycle, is_generated,
-    generation_expression, is_updatable]
-    */
-
-  override Str[] describeTable(Str table)
+  override Str[] describeTable(CTable table)
   {
     stmt := "select * from information_schema.columns where table_name = @table"
-    colmeta := (Row[])conn.sql(stmt).prepare.execute(["table":table])
+    colschema := (Row[])conn.sql(stmt).prepare.execute(["table":table.name])
 
-    stmt = "select * from pg_indexes where tablename = @table"
-    indexes := (Row[])conn.sql(stmt).prepare.execute(["table":table])
+    // TODO FIXIT: @table does not work in this query
+    stmt = "select conrelid::regclass as table_name, conname, "+
+           "pg_get_constraintdef(oid) as condef from pg_constraint " +
+           "where conrelid = '${table.name}'::regclass"
+    colcons := (Row[])conn.sql(stmt).prepare.execute
 
-    return colmeta.map |r->Str|
+    return colschema.map |s->Str|
     {
       // core col meta
       buf := StrBuf()
-      buf.join(r->column_name)
-      buf.join(r->data_type, " ")
-      if (r->is_nullable == "NO") buf.join("not null", " ")
+      buf.join(s->column_name)
+      buf.join(s->data_type, " ")
+      if (s->is_nullable == "NO") buf.join("not null", " ")
 
-      // check for index
-      ix := indexes.find |i| { i->indexdef.toStr.endsWith("(${r->column_name})") }
-      if (ix != null)
+      // check for constraints
+      colcons.each |c|
       {
-        def := ix->indexdef.toStr
-        if (def.startsWith("CREATE UNIQUE")) buf.join("unique", " ")
+        def := c->condef.toStr
+        if (def.endsWith("(${s->column_name})"))
+        {
+          if (def.startsWith("UNIQUE"))      buf.join("unique", " ")
+          if (def.startsWith("PRIMARY KEY"))
+          {
+            // TODO FIXIT: do not pick this up if was defined as table con
+            ontbl := table.constraints.any |x|
+            {
+              p := x as CPKConstraint
+              if (p == null) return false
+              return p.cols.contains(s->column_name)
+            }
+            if (!ontbl) buf.join("primary key", " ")
+          }
+        }
       }
 
-      // echo("> $buf")
+      echo("> $buf")
       return buf.toStr
     }
   }
@@ -108,9 +87,9 @@ internal const class PostgresStoreImpl : StoreImpl
     {
       switch (key)
       {
-        // case "primary_key":
-        //   if (val == true) sql.join("primary key", " ")
-        //   else throw ArgErr("invalid priamry_value '${val}'")
+        case "primary_key":
+          if (val == true) sql.join("primary key", " ")
+          else throw ArgErr("invalid priamry_value '${val}'")
 
         // case "auto_increment":
         //   if (val == true) sql.join("autoincrement", " ")
@@ -136,21 +115,20 @@ internal const class PostgresStoreImpl : StoreImpl
 
   override Str constraintToSql(CConstraint c)
   {
-    throw Err("TODO")
-    // switch (c.typeof)
-    // {
-    //   case CPKConstraint#:
-    //     CPKConstraint pk := c
-    //     cols := pk.cols.join(",")
-    //     return "primary key (${cols})"
+    switch (c.typeof)
+    {
+      case CPKConstraint#:
+        CPKConstraint pk := c
+        cols := pk.cols.join(",")
+        return "primary key (${cols})"
 
-    //   case CUniqueConstraint#:
-    //     CUniqueConstraint u := c
-    //     cols := u.cols.join(",")
-    //     return "unique (${cols})"
+      case CUniqueConstraint#:
+        CUniqueConstraint u := c
+        cols := u.cols.join(",")
+        return "unique (${cols})"
 
-    //   default: throw SqlErr("Unknown constraint type ${c.typeof}")
-    // }
+      default: throw SqlErr("Unknown constraint type ${c.typeof}")
+    }
   }
 
   override Obj fanToSql(CCol col, Obj fan)

@@ -43,8 +43,60 @@ const class PrimaryKeyTestB : CTable
 
 class PrimaryKeyTest : AbstractStoreTest
 {
+  ** Test using column constraint.
+  Void testCol()
+  {
+    tables := [PrimaryKeyTestA#]
+    eachImpl(tables) |s|
+    {
+      // verify empty
+      CTable p := s.table(PrimaryKeyTestA#)
+      verifyEq(p.size, 0)
+
+      // add row
+      p.create(["id":1, "name":"Alpha"])
+      verifyEq(p.size, 1)
+      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
+
+      // add another row
+      p.create(["id":2, "name":"Beta"])
+      verifyEq(p.size, 2)
+      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
+      verifyRec(p.listAll[1], ["id":2, "name":"Beta"])
+
+      // err collision
+      verifySqlErr { p.create(["id":2, "name":"ERR"]) }
+    }
+  }
+
+  ** Test using table level constraint.
+  Void testConstraint()
+  {
+    tables := [PrimaryKeyTestB#]
+    eachImpl(tables) |s|
+    {
+      // verify empty
+      CTable p := s.table(PrimaryKeyTestB#)
+      verifyEq(p.size, 0)
+
+      // add row
+      p.create(["id":1, "name":"Alpha"])
+      verifyEq(p.size, 1)
+      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
+
+      // add another row
+      p.create(["id":2, "name":"Beta"])
+      verifyEq(p.size, 2)
+      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
+      verifyRec(p.listAll[1], ["id":2, "name":"Beta"])
+
+      // err collision
+      verifySqlErr { p.create(["id":2, "name":"ERR"]) }
+    }
+  }
+
   ** Test creating rows with primary keys.
-  Void testCreate()
+  Void testCreateAutoInc()
   {
     tables := [PrimaryKeyTestA#]
     eachImpl(tables) |s|
@@ -98,31 +150,6 @@ class PrimaryKeyTest : AbstractStoreTest
       verifyRec(p.listAll[2], ["id":5, "name":"Gamma"])
       verifyRec(p.listAll[3], ["id":6, "name":"Delta"])
       verifyRec(p.listAll[4], ["id":7, "name":"Epsilon"])
-    }
-  }
-
-  Void testConstraint()
-  {
-    tables := [PrimaryKeyTestB#]
-    eachImpl(tables) |s|
-    {
-      // verify empty
-      CTable p := s.table(PrimaryKeyTestB#)
-      verifyEq(p.size, 0)
-
-      // add row
-      p.create(["id":1, "name":"Alpha"])
-      verifyEq(p.size, 1)
-      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
-
-      // add another row
-      p.create(["id":2, "name":"Beta"])
-      verifyEq(p.size, 2)
-      verifyRec(p.listAll[0], ["id":1, "name":"Alpha"])
-      verifyRec(p.listAll[1], ["id":2, "name":"Beta"])
-
-      // err collision
-      verifySqlErr { p.create(["id":2, "name":"ERR"]) }
     }
   }
 }

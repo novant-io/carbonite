@@ -19,10 +19,10 @@ internal const class SqliteStoreImpl : StoreImpl
     this.connRef.val = Unsafe(conn)
   }
 
-  override Str[] describeTable(Str table)
+  override Str[] describeTable(CTable table)
   {
     stmt  := "select * from sqlite_schema where name = @table"
-    rows  := (Row[])conn.sql(stmt).prepare.execute(["table":table])
+    rows  := (Row[])conn.sql(stmt).prepare.execute(["table":table.name])
     sql   := rows.first->sql.toStr
     return sql[sql.index("(")+1..-2].split(',')
   }

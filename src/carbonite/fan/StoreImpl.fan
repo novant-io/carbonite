@@ -83,7 +83,7 @@ internal abstract const class StoreImpl
         exec("create table if not exists ${t.name} (${cstr})")
 
         // check if we need to add cols
-        has := describeTable(t.name)
+        has := describeTable(t)
         t.cols.each |c|
         {
           cur := has.find |h| { h.startsWith("${c.name} ") }
@@ -103,6 +103,8 @@ internal abstract const class StoreImpl
             }
           }
         }
+
+        // TODO FIXIT: we need to test table-level constraints too
 
         // TODO: we do not currently auto-remove unused cols
       }
@@ -127,7 +129,7 @@ internal abstract const class StoreImpl
   abstract Obj sqlToFan(CCol col, Obj fan)
 
   ** Return SQL column schema from database for given table name.
-  abstract Str[] describeTable(Str table)
+  abstract Str[] describeTable(CTable table)
 
   ** Effeciently return number of rows for given table.
   virtual Int tableSize(CTable table)
