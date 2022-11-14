@@ -16,7 +16,7 @@ const class FK_Orgs : CTable
 {
   override const Str name := "fk_orgs"
   override const CCol[] cols := [
-    CCol("id",   Int#, ["primary_key":true]),
+    CCol("id",   Int#, ["primary_key":true, "auto_increment":true]),
     CCol("name", Str#, [:]),
   ]
 }
@@ -25,7 +25,7 @@ const class FK_Users : CTable
 {
   override const Str name := "fk_users"
   override const CCol[] cols := [
-    CCol("id",     Int#, ["primary_key":true]),
+    CCol("id",     Int#, ["primary_key":true, "auto_increment":true]),
     CCol("name",   Str#, [:]),
     CCol("org_id", Int#, ["foreign_key":FK_Orgs#]),
   ]
@@ -54,7 +54,7 @@ class ForeignKeyTest : AbstractStoreTest
       o.create(["name":"Org 1"])
       verifyEq(o.size, 1)
 
-      // add an org and user
+      // add user to ort
       u.create(["name":"Bobby", "org_id":1])
       verifyEq(u.size, 1)
 

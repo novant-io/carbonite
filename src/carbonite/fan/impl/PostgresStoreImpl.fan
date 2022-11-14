@@ -62,6 +62,11 @@ internal const class PostgresStoreImpl : StoreImpl
             if (!ontbl) buf.join("primary key", " ")
           }
         }
+        else if (def.startsWith("FOREIGN KEY (${s->column_name})"))
+        {
+          ref := def.split(' ').last
+          buf.join("references ${ref}", " ")
+        }
       }
 
       // echo("> $buf")
@@ -111,11 +116,11 @@ internal const class PostgresStoreImpl : StoreImpl
           if (val == true) sql.join("unique", " ")
           else throw ArgErr("invalid unique '${val}'")
 
-        // case "foreign_key":
-        //   fk := val
-        //   if (fk is Type) fk = "${store.table(fk).name}(id)"
-        //   if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
-        //   sql.join("references ${fk}", " ")
+        case "foreign_key":
+          fk := val
+          if (fk is Type) fk = "${store.table(fk).name}(id)"
+          if (fk isnot Str) throw ArgErr("invalid foreign_val '${fk}'")
+          sql.join("references ${fk}", " ")
 
         default: throw ArgErr("unknown col meta '${key}'")
       }

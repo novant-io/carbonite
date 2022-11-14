@@ -29,6 +29,7 @@ abstract class AbstractStoreTest : Test
 
     // postgres
     Process { it.command=["dropdb", "-f", "--if-exists", dbname] }.run
+    echo("DROP DATABASE")
     Actor.sleep(100ms)
     Process { it.command=["bash", "-c", "psql postgres -U ${dbuser} -c 'create database ${dbname}'" ]}.run
     Actor.sleep(100ms)
