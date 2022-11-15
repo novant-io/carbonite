@@ -19,8 +19,9 @@ const class CCol
     this.name = name
     this.type = type
     this.meta = meta
-    this.primaryKey = meta["primary_key"] == true
-    this.scopedBy   = meta["scoped_by"]
+    this.primaryKey    = meta["primary_key"] == true
+    this.autoIncrement = meta["auto_increment"] == true
+    this.scopedBy      = meta["scoped_by"]
 
   }
 
@@ -36,8 +37,18 @@ const class CCol
   ** Is this column a primary key?
   const Bool primaryKey
 
+  ** Does this column have auto increment meta?
+  const Bool autoIncrement
+
   ** Column this instance is scoped by or 'null' for none.
   const Str? scopedBy
+
+  ** Does this column require a non-null value on create.
+  Bool req()
+  {
+    if (primaryKey && autoIncrement) return false
+    return !type.isNullable
+  }
 
   override Str toStr() { name }
 }

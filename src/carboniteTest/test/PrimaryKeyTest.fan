@@ -66,6 +66,10 @@ class PrimaryKeyTest : AbstractStoreTest
 
       // err collision
       verifySqlErr { p.create(["id":2, "name":"ERR"]) }
+
+// TODO: should we standardize all errs on SqlErr?
+      // missing id with no autoinc
+      verifyErr(ArgErr#) { p.create(["name":"ERR"]) }
     }
   }
 

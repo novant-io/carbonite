@@ -21,18 +21,25 @@ abstract class AbstractStoreTest : Test
   private const Str dbuser := "carbonite_test"
   private const Str dbpass := "carbonite_pass"
 
+  private const Bool sqlite   := true
+  private const Bool postgres := true
+
   ** Start each test with fresh stores instances.
   override Void setup()
   {
-    // sqlite
-    sqliteFile.delete
+    if (sqlite)
+    {
+      sqliteFile.delete
+    }
 
-    // postgres
-    Process { it.command=["dropdb", "-f", "--if-exists", dbname] }.run
-    echo("DROP DATABASE")
-    Actor.sleep(100ms)
-    Process { it.command=["bash", "-c", "psql postgres -U ${dbuser} -c 'create database ${dbname}'" ]}.run
-    Actor.sleep(100ms)
+    if (postgres)
+    {
+      Process { it.command=["dropdb", "-f", "--if-exists", dbname] }.run
+      echo("DROP DATABASE")
+      Actor.sleep(100ms)
+      Process { it.command=["bash", "-c", "psql postgres -U ${dbuser} -c 'create database ${dbname}'" ]}.run
+      Actor.sleep(100ms)
+    }
   }
 
   **
@@ -42,17 +49,21 @@ abstract class AbstractStoreTest : Test
   **
   Void eachImpl(Obj[] tables, |CStore store| func)
   {
-    // sqlite
-    echo("   Impl: sqlite   $tables")
-    store := CStore.openSqlite(sqliteFile, tables)
-    try func(store)
-    finally store.close
+    if (sqlite)
+    {
+      echo("   Impl: sqlite   $tables")
+      store := CStore.openSqlite(sqliteFile, tables)
+      try func(store)
+      finally store.close
+    }
 
-    // postgres
-    echo("   Impl: postgres $tables")
-    store = CStore.openPostgres("localhost", dbname, dbuser, dbpass, tables)
-    try func(store)
-    finally store.close
+    if (postgres)
+    {
+      echo("   Impl: postgres $tables")
+      store := CStore.openPostgres("localhost", dbname, dbuser, dbpass, tables)
+      try func(store)
+      finally store.close
+    }
   }
 
   **
