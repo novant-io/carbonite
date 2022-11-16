@@ -14,8 +14,9 @@ internal const class PostgresStoreImpl : StoreImpl
 {
   new make(Str dbhost, Str dbname, Str username, Str password)
   {
-    uri  := "jdbc:postgresql://${dbhost}/${dbname}?user=${username}&password=${password}"
-    conn := makeConn("org.postgresql.Driver", uri)
+    query := ["user":username, "password":password]
+    uri   := `jdbc:postgresql://${dbhost}/${dbname}`.plusQuery(query)
+    conn  := makeConn("org.postgresql.Driver", uri.encode)
     this.connRef.val = Unsafe(conn)
   }
 
