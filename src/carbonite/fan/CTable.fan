@@ -37,8 +37,8 @@ abstract const class CTable
   }
 
   ** Create a new record in this table with given field values and
-  ** return the new record instance.
-  Void /*CRec*/ create(Str:Obj? fields)
+  ** return the new record id.
+  Int create(Str:Obj? fields)
   {
     // verify field cols
     fields.each |v,k|
@@ -65,7 +65,7 @@ abstract const class CTable
       if (v == null && c.req) throw ArgErr("Missing non-nullable column value for '${c.name}'")
     }
 
-    store.impl.create(this, fields)
+    return store.impl.create(this, fields)
   }
 
   ** Get record by id.

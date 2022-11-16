@@ -138,13 +138,15 @@ internal abstract const class StoreImpl
     return r.get(r.cols.first)
   }
 
-  ** Create a new record in sql database.
-  virtual Void create(CTable table, Str:Obj fields)
+  ** Create a new record in sql database and return new id.
+  virtual Int create(CTable table, Str:Obj fields)
   {
     cols := fields.keys.join(",")
     vars := fields.keys.join(",") |n| { "@${n}" }
-    exec("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
-    // return new rec
+    res := execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
+    // TODO: for now we require an id column
+    Int id := (res as List).first
+    return id
   }
 
   ** Return result from select sql statement.
