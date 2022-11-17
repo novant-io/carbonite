@@ -141,7 +141,7 @@ internal abstract const class StoreImpl
   ** Create a new record in sql database and return new id.
   virtual Int create(CTable table, Str:Obj fields)
   {
-    cols := fields.keys.join(",")
+    cols := fields.keys.join(",") |c| { "\"${c}\"" }
     vars := fields.keys.join(",") |n| { "@${n}" }
     res := execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
     // TODO: for now we require an id column
@@ -178,7 +178,7 @@ internal abstract const class StoreImpl
   ** Update an existing record in sql database.
   virtual Void update(CTable table, Int id, Str:Obj? fields)
   {
-    assign := fields.keys.join(",") |n| { "${n} = @${n}" }
+    assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
     exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
     // return new rec
   }
