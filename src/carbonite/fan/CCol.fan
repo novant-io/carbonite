@@ -22,6 +22,7 @@ const class CCol
     this.primaryKey    = meta["primary_key"] == true
     this.autoIncrement = meta["auto_increment"] == true
     this.scopedBy      = meta["scoped_by"]
+    this.defVal        = meta["def_val"]
 
   }
 
@@ -43,10 +44,14 @@ const class CCol
   ** Column this instance is scoped by or 'null' for none.
   const Str? scopedBy
 
+  ** Default for this value or 'null' if undefined.
+  const Obj? defVal
+
   ** Does this column require a non-null value on create.
   Bool req()
   {
     if (primaryKey && autoIncrement) return false
+    if (defVal != null) return false
     return !type.isNullable
   }
 

@@ -65,6 +65,13 @@ internal const class SqliteStoreImpl : StoreImpl
             else throw ArgErr("invalid auto_increment '${av}'")
           }
 
+        case "def_val":
+          if (!col.type.fits(val.typeof)) throw ArgErr("invalid def_val '${val}'")
+          // TODO: not right; need to pull this into exec(params)
+          def := fanToSql(col, val)
+          if (def is Str) sql.join("default ${def.toStr.toCode}")
+          else sql.join("default ${def}")
+
         case "unique":
           if (val == true) sql.join("unique", " ")
           else throw ArgErr("invalid unique '${val}'")

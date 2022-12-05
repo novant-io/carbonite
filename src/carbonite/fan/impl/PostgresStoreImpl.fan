@@ -35,14 +35,19 @@ internal const class PostgresStoreImpl : StoreImpl
     {
       // serial trumps data_type
       type   := s->data_type
-      colDef := s->column_default?.toStr ?: ""
-      if (colDef.startsWith("nextval(")) type = "serial"
+      colDef := s->column_default
+      if (colDef is Str && colDef.toStr.startsWith("nextval("))
+      {
+        type = "serial"
+        colDef = null
+      }
 
       // core col meta
       buf := StrBuf()
       buf.join("\"${s->column_name}\"")
       buf.join(type, " ")
       if (s->is_nullable == "NO") buf.join("not null", " ")
+      if (colDef != null) buf.join("default ${colDef}")
 
       // check for constraints
       colcons.each |c|
@@ -112,6 +117,13 @@ internal const class PostgresStoreImpl : StoreImpl
 
         // picked up in base type
         case "auto_increment": return
+
+        case "def_val":
+          if (!col.type.fits(val.typeof)) throw ArgErr("invalid def_val '${val}'")
+          // TODO: not right; need to pull this into exec(params)
+          def := fanToSql(col, val)
+          if (def is Str) sql.join("default " + def.toStr.toCode('\'') +  + "::text")
+          else sql.join("default ${def}")
 
         case "unique":
           if (val == true) sql.join("unique", " ")
