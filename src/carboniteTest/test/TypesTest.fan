@@ -19,6 +19,7 @@ const class Types : CTable
     CCol("id",       Int#,       [:]),
     CCol("str",      Str?#,      [:]),
     CCol("int",      Int?#,      [:]),
+    CCol("int_list", Int[]?#,    [:]),
     CCol("date",     Date?#,     [:]),
     CCol("datetime", DateTime?#, [:]),
   ]
@@ -66,6 +67,21 @@ class TypesTest : AbstractStoreTest
       r = t.get(1)
       verifyEq(r->int, 25)
       verifyEq(r.getInt("int"), 25)
+    }
+  }
+
+  Void testIntList()
+  {
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->int, null)
+      t.update(1, ["int_list":[1,3,7,9]])
+
+      r = t.get(1)
+      verifyEq(r->int_list, [1,3,7,9])
+      verifyEq(r.getIntList("int_list"), [1,3,7,9])
     }
   }
 

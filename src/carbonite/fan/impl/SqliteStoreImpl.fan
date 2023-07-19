@@ -37,6 +37,7 @@ internal const class SqliteStoreImpl : StoreImpl
     {
       case Str#:      sql.join("text",    " ")
       case Int#:      sql.join("integer", " ")
+      case Int[]#:    sql.join("text",    " ")
       case Date#:     sql.join("integer", " ")
       case DateTime#: sql.join("integer", " ")
       default:        throw ArgErr("Unsupported col type '${col.type}'")
@@ -124,6 +125,11 @@ internal const class SqliteStoreImpl : StoreImpl
     {
       case Str#:  return fan
       case Int#:  return fan
+
+      case Int[]#:
+        Int[] v := fan
+        return v.join(",")
+
       case Date#:
         Date d := fan
         y := d.year
@@ -143,6 +149,11 @@ internal const class SqliteStoreImpl : StoreImpl
   {
     switch (col.type.toNonNullable)
     {
+      case Int[]#:
+        i := Int[,]
+        sql.toStr.split(',').each |s| { i.add(s.toInt) }
+        return i
+
       case Date#:
         Int v := sql
         y := v.shiftr(16).and(0xffff)

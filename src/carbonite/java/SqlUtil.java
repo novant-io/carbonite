@@ -42,7 +42,7 @@ public class SqlUtil
    * Get a JDBC Java object for the specified Fan object.
    */
   @SuppressWarnings({"deprecation"})
-  public static Object fanToSqlObj(Object value)
+  public static Object fanToSqlObj(Object value, Connection jconn)
   {
     Object jobj = value;
 
@@ -64,6 +64,17 @@ public class SqlUtil
     else if (value instanceof MemBuf)
     {
       jobj = ((MemBuf)value).buf;
+    }
+    else if (value instanceof fan.sys.List)
+    {
+      try {
+        fan.sys.List l = (fan.sys.List)value;
+        // TODO FIXIT: only supported for postgres and Int[] arrays
+        jobj = jconn.createArrayOf("BIGINT", l.toArray());
+      }
+      catch (SQLException e) {
+        throw SqlErr.make(e.getMessage(), Err.make(e));
+      }
     }
 
     return jobj;
@@ -115,6 +126,9 @@ public class SqlUtil
 
       case Types.TIME:
         return Sys.TimeType;
+
+      case Types.ARRAY:
+        return Sys.ListType;
 
       default:
         return null;
@@ -218,6 +232,9 @@ public class SqlUtil
 
       case Types.TIME:
         return new ToFanTime();
+
+      case Types.ARRAY:
+        return new ToFanList();
 
       default:
         return new ToDefFanStr();
@@ -334,6 +351,18 @@ public class SqlUtil
       java.sql.Time t = rs.getTime(col);
       if (rs.wasNull()) return null;
       return fan.sys.Time.make(t.getHours(), t.getMinutes(), t.getSeconds());
+    }
+  }
+
+  public static class ToFanList extends SqlToFan
+  {
+    public Object toObj(ResultSet rs, int col)
+      throws SQLException
+    {
+      Array a = rs.getArray(col);
+      if (a == null) return null;
+      // TODO: only Int[] support right now...
+      return fan.sys.List.make(Sys.IntType, (Object[])a.getArray());
     }
   }
 

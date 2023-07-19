@@ -23,6 +23,10 @@ const class CRec
   ** null if not found or value is not a Int type.
   Int? getInt(Str name) { get(name) as Int }
 
+  ** Get the record value for given field as 'Int[]', or
+  ** null if not found or value is not a Int[] type.
+  Int[]? getIntList(Str name) { get(name) as Int[] }
+
   ** Get the record value for given field as 'Str', or
   ** null if not found or value is not a 'Str' type.
   Str? getStr(Str name) { get(name) as Str }

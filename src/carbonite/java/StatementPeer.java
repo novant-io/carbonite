@@ -308,13 +308,17 @@ public class StatementPeer
       throw SqlErr.make("Statement has not been prepared.");
     PreparedStatement pstmt = (PreparedStatement)stmt;
 
+    Connection jconn;
+    try { jconn = stmt.getConnection(); }
+    catch (SQLException e) { throw SqlErr.make(e.getMessage(), Err.make(e)); }
+
     Iterator i = paramMap.entrySet().iterator();
     while (i.hasNext())
     {
       java.util.Map.Entry entry = (java.util.Map.Entry)i.next();
       String key = (String)entry.getKey();
       Object value = params.get(key);
-      Object jobj = SqlUtil.fanToSqlObj(value);
+      Object jobj = SqlUtil.fanToSqlObj(value, jconn);
       int[] locs = (int[])entry.getValue();
       for (int j = 0; j < locs.length; j++)
       {

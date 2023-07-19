@@ -33,13 +33,22 @@ internal const class PostgresStoreImpl : StoreImpl
 
     return colschema.map |s->Str|
     {
-      // serial trumps data_type
+      // psql specific column metadata
       type   := s->data_type
       colDef := s->column_default
+      dtName := s->udt_name
+
+      // serial trumps data_type
       if (colDef is Str && colDef.toStr.startsWith("nextval("))
       {
         type = "serial"
         colDef = null
+      }
+
+      // check array types
+      if (type == "ARRAY")
+      {
+        if (dtName == "_int8") type = "bigint[]"
       }
 
       // core col meta
@@ -75,7 +84,7 @@ internal const class PostgresStoreImpl : StoreImpl
         }
       }
 
-      // echo("> $buf")
+      // echo("> $type -> $buf")
       return buf.toStr
     }
   }
@@ -95,9 +104,10 @@ internal const class PostgresStoreImpl : StoreImpl
       // base type
       switch (col.type.toNonNullable)
       {
-        case Str#:      sql.join("text",   " ")
-        case Int#:      sql.join("bigint", " ")
-        case Date#:     sql.join("date",   " ")
+        case Str#:      sql.join("text",     " ")
+        case Int#:      sql.join("bigint",   " ")
+        case Int[]#:    sql.join("bigint[]", " ")
+        case Date#:     sql.join("date",     " ")
         case DateTime#: sql.join("timestamp without time zone", " ")
         default:        throw ArgErr("Unsupported col type '${col.type}'")
       }
@@ -174,9 +184,10 @@ internal const class PostgresStoreImpl : StoreImpl
 
     switch (col.type.toNonNullable)
     {
-      case Str#:  return fan
-      case Int#:  return fan
-      case Date#: return fan
+      case Str#:   return fan
+      case Int#:   return fan
+      case Int[]#: return fan
+      case Date#:  return fan
       case DateTime#:
         // TODO: move this into SqlUtil to avoid conversion here
         DateTime d := fan
