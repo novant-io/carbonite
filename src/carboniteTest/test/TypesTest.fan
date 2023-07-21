@@ -77,11 +77,16 @@ class TypesTest : AbstractStoreTest
       t := s.table(Types#)
       r := t.get(1)
       verifyEq(r->int, null)
-      t.update(1, ["int_list":[1,3,7,9]])
 
+      t.update(1, ["int_list":[1,3,7,9]])
       r = t.get(1)
       verifyEq(r->int_list, [1,3,7,9])
       verifyEq(r.getIntList("int_list"), [1,3,7,9])
+
+      t.update(1, ["int_list":[,]])
+      r = t.get(1)
+      verifyEq(r->int_list, Int[,])
+      verifyEq(r.getIntList("int_list"), Int[,])
     }
   }
 

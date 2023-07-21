@@ -19,7 +19,7 @@ const class DefValTests1 : CTable
     CCol("id",     Int#,   [:]),
     CCol("name",   Str#,   ["def_val":"Bob"]),
     CCol("age",    Int#,   ["def_val":40]),
-    CCol("picks1", Int[]#, ["def_val":Int[,]]),
+    CCol("picks1", Int[]#, ["def_val":[,]]),
     // TODO: need to fix SqliteStoreImpl.describe impl
     // CCol("picks2", Int[]#, ["def_val":[5,7,9]]),
     // TODO
@@ -31,10 +31,10 @@ const class DefValTests2 : CTable
 {
   override const Str name := "def_val_tests"
   override const CCol[] cols := [
-    CCol("id",      Int#,  [:]),
-    CCol("name",    Str#,  ["def_val":"Bob"]),
-    CCol("age",     Int#,  ["def_val":40]),
-    CCol("picks1", Int[]#, ["def_val":Int[,]]),
+    CCol("id",     Int#,   [:]),
+    CCol("name",   Str#,   ["def_val":"Bob"]),
+    CCol("age",    Int#,   ["def_val":40]),
+    CCol("picks1", Int[]#, ["def_val":[,]]),
     // TODO: need to fix SqliteStoreImpl.describe impl
     // CCol("picks2", Int[]#, ["def_val":[5,7,9]]),
     // TODO

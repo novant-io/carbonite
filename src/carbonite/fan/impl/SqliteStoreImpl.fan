@@ -118,6 +118,15 @@ internal const class SqliteStoreImpl : StoreImpl
 
   override Obj fanToSql(CCol col, Obj fan)
   {
+    // empty list get Obj?# so force type here to make checks not fail
+    if (col.type.fits(List#) && fan is List && fan->isEmpty == true)
+    {
+      switch (col.type.toNonNullable)
+      {
+        case Int[]#: fan = Int#.emptyList
+      }
+    }
+
     // short-circuit if types do not match
     if (col.type.toNonNullable != fan.typeof.toNonNullable)
       throw ArgErr("Invalid type: ${fan} (${fan.typeof} != ${col.type})")
