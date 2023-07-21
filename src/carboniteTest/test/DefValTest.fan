@@ -16,9 +16,12 @@ const class DefValTests1 : CTable
 {
   override const Str name := "def_val_tests"
   override const CCol[] cols := [
-    CCol("id",   Int#,  [:]),
-    CCol("name", Str#,  ["def_val":"Bob"]),
-    CCol("age",  Int#,  ["def_val":40]),
+    CCol("id",     Int#,   [:]),
+    CCol("name",   Str#,   ["def_val":"Bob"]),
+    CCol("age",    Int#,   ["def_val":40]),
+    CCol("picks1", Int[]#, ["def_val":Int[,]]),
+    // TODO: need to fix SqliteStoreImpl.describe impl
+    // CCol("picks2", Int[]#, ["def_val":[5,7,9]]),
     // TODO
     // CCol("date",    Date#, ["def_val":Date("2022-12-05")]),
   ]
@@ -31,6 +34,9 @@ const class DefValTests2 : CTable
     CCol("id",      Int#,  [:]),
     CCol("name",    Str#,  ["def_val":"Bob"]),
     CCol("age",     Int#,  ["def_val":40]),
+    CCol("picks1", Int[]#, ["def_val":Int[,]]),
+    // TODO: need to fix SqliteStoreImpl.describe impl
+    // CCol("picks2", Int[]#, ["def_val":[5,7,9]]),
     // TODO
     // CCol("date",    Date#, ["def_val":Date("2022-12-05")]),
     CCol("new_col", Int#,  ["def_val":7])
@@ -76,16 +82,18 @@ class DefValTest : AbstractStoreTest
       // add row with all defs
       CTable d := s.table(DefValTests1#)
       d.create(["id":1])
-      verifyEq(d.get(1)->id,   1)
-      verifyEq(d.get(1)->name, "Bob")
-      verifyEq(d.get(1)->age,  40)
+      verifyEq(d.get(1)->id,     1)
+      verifyEq(d.get(1)->name,   "Bob")
+      verifyEq(d.get(1)->age,    40)
+      verifyEq(d.get(1)->picks1, Int[,])
       // verifyEq(d.get(1)->date, Date("2022-12-05"))
 
       // add row with explicit vals for all cols
       d.create(["id":2, "name":"Billy", "age":23]) //, "date":Date("1985-12-20")])
-      verifyEq(d.get(2)->id,   2)
-      verifyEq(d.get(2)->name, "Billy")
-      verifyEq(d.get(2)->age,  23)
+      verifyEq(d.get(2)->id,     2)
+      verifyEq(d.get(2)->name,   "Billy")
+      verifyEq(d.get(2)->age,    23)
+      verifyEq(d.get(1)->picks1, Int[,])
       // verifyEq(d.get(2)->date, Date("1985-12-20"))
     }
 

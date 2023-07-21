@@ -24,6 +24,7 @@ internal const class SqliteStoreImpl : StoreImpl
     stmt  := "select * from sqlite_schema where name = @table"
     rows  := (Row[])conn.sql(stmt).prepare.execute(["table":table.name])
     sql   := rows.first->sql.toStr
+    // TODO FIXIT: can't use split - need to parse manually - comma may be in defVal
     return sql[sql.index("(")+1..-2].split(',')
   }
 
@@ -150,8 +151,10 @@ internal const class SqliteStoreImpl : StoreImpl
     switch (col.type.toNonNullable)
     {
       case Int[]#:
+        v := sql.toStr
+        if (v.isEmpty) return Int#.emptyList
         i := Int[,]
-        sql.toStr.split(',').each |s| { i.add(s.toInt) }
+        v.split(',').each |s| { i.add(s.toInt) }
         return i
 
       case Date#:

@@ -133,6 +133,12 @@ internal const class PostgresStoreImpl : StoreImpl
           // TODO: not right; need to pull this into exec(params)
           def := fanToSql(col, val)
           if (def is Str) sql.join("default " + def.toStr.toCode('\'') +  + "::text")
+          else if (def is Int[])
+          {
+            // TODO FIXIT: only support empty array; but also this should
+            // be handled down in Java code; so abstraction leaking here!
+            sql.join("default '{}'::bigint[]")
+          }
           else sql.join("default ${def}")
 
         case "unique":

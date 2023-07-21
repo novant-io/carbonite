@@ -49,6 +49,11 @@ class SqliteTest : Test
     verifyCol(store, CCol("foo", Int#,  ["foreign_key":"bar(id)"]), "\"foo\" integer not null references bar(id)")
     verifyCol(store, CCol("foo", Int?#, ["foreign_key":"bar(id)"]), "\"foo\" integer references bar(id)")
 
+    // def val
+    verifyCol(store, CCol("foo", Int#,   ["def_val":5]),       "\"foo\" integer not null default 5")
+    verifyCol(store, CCol("foo", Int[]#, ["def_val":Int[,]]),  "\"foo\" text not null default \"\"")
+    verifyCol(store, CCol("foo", Int[]#, ["def_val":[1,2,3]]), "\"foo\" text not null default \"1,2,3\"")
+
     // unknown keys
     verifyErr(ArgErr#) { colToSql(store, CCol("foo", Int#, ["some_key":true])) }
 
