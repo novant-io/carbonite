@@ -132,6 +132,7 @@ class BasicTest : AbstractStoreTest
     // re-open new schema and non-null with no default value
     // eachImplErr([EmployeesErr3#])
 
+// TODO FIXIT: this does not throw for sqlite??
     // re-open with schema mismatch
     eachImplErr([EmployeesErr4#])
 

@@ -18,6 +18,7 @@ const class Types : CTable
   override const CCol[] cols := [
     CCol("id",       Int#,       [:]),
     CCol("str",      Str?#,      [:]),
+    CCol("bool",     Bool?#,     [:]),
     CCol("int",      Int?#,      [:]),
     CCol("int_list", Int[]?#,    [:]),
     CCol("date",     Date?#,     [:]),
@@ -47,11 +48,36 @@ class TypesTest : AbstractStoreTest
       t := s.table(Types#)
       r := t.get(1)
       verifyEq(r->str, null)
-      t.update(1, ["str":"foo bar"])
 
+      t.update(1, ["str":"foo bar"])
       r = t.get(1)
       verifyEq(r->str, "foo bar")
       verifyEq(r.getStr("str"), "foo bar")
+    }
+  }
+
+  Void testBool()
+  {
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->bool, null)
+
+      t.update(1, ["bool":true])
+      r = t.get(1)
+      verifyEq(r->bool, true)
+      verifyEq(r.getBool("bool"), true)
+
+      t.update(1, ["bool":false])
+      r = t.get(1)
+      verifyEq(r->bool, false)
+      verifyEq(r.getBool("bool"), false)
+
+      t.update(1, ["bool":null])
+      r = t.get(1)
+      verifyEq(r->bool, null)
+      verifyEq(r.getBool("bool"), null)
     }
   }
 

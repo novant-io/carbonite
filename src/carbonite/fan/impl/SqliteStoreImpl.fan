@@ -37,6 +37,7 @@ internal const class SqliteStoreImpl : StoreImpl
     switch (col.type.toNonNullable)
     {
       case Str#:      sql.join("text",    " ")
+      case Bool#:     sql.join("integer", " ")
       case Int#:      sql.join("integer", " ")
       case Int[]#:    sql.join("text",    " ")
       case Date#:     sql.join("integer", " ")
@@ -135,6 +136,7 @@ internal const class SqliteStoreImpl : StoreImpl
     {
       case Str#:  return fan
       case Int#:  return fan
+      case Bool#: return fan == true ? 1 : 0
 
       case Int[]#:
         Int[] v := fan
@@ -159,6 +161,9 @@ internal const class SqliteStoreImpl : StoreImpl
   {
     switch (col.type.toNonNullable)
     {
+      case Bool#:
+        return sql == 1 ? true : false
+
       case Int[]#:
         v := sql.toStr
         if (v.isEmpty) return Int#.emptyList

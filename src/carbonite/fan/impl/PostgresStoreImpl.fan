@@ -105,6 +105,7 @@ internal const class PostgresStoreImpl : StoreImpl
       switch (col.type.toNonNullable)
       {
         case Str#:      sql.join("text",     " ")
+        case Bool#:     sql.join("boolean",  " ")
         case Int#:      sql.join("bigint",   " ")
         case Int[]#:    sql.join("bigint[]", " ")
         case Date#:     sql.join("date",     " ")
@@ -200,6 +201,7 @@ internal const class PostgresStoreImpl : StoreImpl
     switch (col.type.toNonNullable)
     {
       case Str#:   return fan
+      case Bool#:  return fan
       case Int#:   return fan
       case Int[]#: return fan
       case Date#:  return fan

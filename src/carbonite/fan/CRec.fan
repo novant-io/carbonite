@@ -19,6 +19,10 @@ const class CRec
   ** Get the record value for given 'name', or null if not found.
   Obj? get(Str name) { map[name] }
 
+  ** Get the record value for given field as 'Bool', or
+  ** null if not found or value is not a Bool type.
+  Bool? getBool(Str name) { get(name) as Bool }
+
   ** Get the record value for given field as 'Int', or
   ** null if not found or value is not a Int type.
   Int? getInt(Str name) { get(name) as Int }
