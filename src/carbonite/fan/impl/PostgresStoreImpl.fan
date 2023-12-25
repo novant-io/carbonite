@@ -51,6 +51,12 @@ internal const class PostgresStoreImpl : StoreImpl
         if (dtName == "_int8") type = "bigint[]"
       }
 
+      // strip 'xxx'::bigint suffix
+      if (type == "bigint" && colDef is Str && ((Str)colDef).getSafe(0) == '\'')
+      {
+        colDef = ((Str)colDef)[1..-("'::bigint".size+1)]
+      }
+
       // core col meta
       buf := StrBuf()
       buf.join("\"${s->column_name}\"")

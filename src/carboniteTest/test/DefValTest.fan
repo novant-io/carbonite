@@ -69,6 +69,18 @@ const class DefValTestsErr2 : CTable
   ]
 }
 
+const class DefValTypes : CTable
+{
+  override const Str name := "def_val_types"
+  override const CCol[] cols := [
+    CCol("id",      Int#,   [:]),
+    CCol("int1",    Int#,   ["def_val":0xffff]),
+    CCol("int2",    Int#,   ["def_val":0x7fff_ffff]),
+    CCol("bigint1", Int?#,  ["def_val":0xffff_ffff]),
+    CCol("bigint2", Int?#,  ["def_val":Int.maxVal]),
+  ]
+}
+
 *************************************************************************
 ** DefValTest
 *************************************************************************
@@ -118,6 +130,20 @@ class DefValTest : AbstractStoreTest
     // test def_val with wrong type
     verifySqlErr {
       this.eachImpl([DefValTestsErr2#]) |s| { /**/ }
+    }
+  }
+
+  Void testTypes()
+  {
+    eachImpl([DefValTypes#]) |s|
+    {
+      // add row with all defs
+      CTable d := s.table(DefValTypes#)
+      d.create(["id":1])
+      verifyEq(d.get(1)->int1,    0xffff)
+      verifyEq(d.get(1)->int2,    0x7fff_ffff)
+      verifyEq(d.get(1)->bigint1, 0xffff_ffff)
+      verifyEq(d.get(1)->bigint2, Int.maxVal)
     }
   }
 }
