@@ -18,7 +18,7 @@ internal abstract const class StoreImpl
   ** Create SqlConn instance for given driver and connection info.
   protected SqlConn makeConn(Str jdbc, Str conn) //, Str? user, Str? pass)
   {
-    // repload JDBC driver.
+    // preload JDBC driver.
     try { JClass.forName(jdbc) }
     catch (Err err)
     {
