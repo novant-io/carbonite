@@ -12,11 +12,13 @@
 
 internal const class SqliteStoreImpl : StoreImpl
 {
-  new make(File file)
+  new make(File file, Str:Obj opts)
   {
     if (!file.exists) file.create
-    conn := makeConn("org.sqlite.JDBC", "jdbc:sqlite:${file.osPath}?foreign_keys=on")
-    this.connRef.val = Unsafe(conn)
+    this.driver  = "org.sqlite.JDBC"
+    this.connStr = "jdbc:sqlite:${file.osPath}?foreign_keys=on"
+    this.opts    = opts
+    this.init
   }
 
   override Str[] describeTable(CTable table)

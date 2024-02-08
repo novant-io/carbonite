@@ -15,24 +15,57 @@ using [java] java.lang::Class as JClass
 
 internal abstract const class StoreImpl
 {
+  ** Post contructor callback.
+  protected Void init()
+  {
+    // sanity checks
+    if (driver  == null) throw ArgErr("driver not configured")
+    if (connStr == null) throw ArgErr("connStr not configured")
+    if (opts    == null) throw ArgErr("opts not configured")
+
+    // cache opts and open
+    this.autoReopen.val = opts["auto_reopen"] == true
+    this.openConn
+  }
+
+  ** JDBC driver name (must be set in subclass)
+  protected const Str? driver
+
+  ** JDBC connection string (must be set in subclass)
+  protected const Str? connStr
+
+  ** Options (must be set in subclass)
+  protected const [Str:Obj]? opts
+  private const AtomicBool autoReopen := AtomicBool(false)
+
   ** Create SqlConn instance for given driver and connection info.
-  protected SqlConn makeConn(Str jdbc, Str conn) //, Str? user, Str? pass)
+  protected Void openConn()
   {
     // preload JDBC driver.
-    try { JClass.forName(jdbc) }
+    try { JClass.forName(driver) }
     catch (Err err)
     {
       // nice message for jdbc driver not installed
       throw err.msg.contains("java.lang.ClassNotFoundException")
-        ? Err("${jdbc} driver not found")
+        ? Err("${driver} driver not found")
         : err
     }
-    return SqlConn.open(conn, null, null) //user, pass)
+
+    // open conn
+    conn := SqlConn.open(connStr, null, null) // user, pass)
+    this.connRef.val = Unsafe(conn)
   }
 
   // TODO FIXIT: move const-ness down into SqlXxx methods
   protected SqlConn conn() { (connRef.val as Unsafe).val }
   protected const AtomicRef connRef := AtomicRef(null)
+
+  ** Return 'true' if backing connection is closed.
+  protected Bool isClosed()
+  {
+    if (connRef.val == null) return true
+    return conn.isClosed
+  }
 
   ** Execute sql querty with params and return results as Row[] list.
   protected Row[] exec(Str query, [Str:Obj]? params := null)
@@ -46,7 +79,11 @@ internal abstract const class StoreImpl
   ** Execute sql querty with params and return results as Row[] list.
   protected Obj execRaw(Str query, [Str:Obj]? params := null)
   {
-    conn.sql(query).prepare.execute(params)
+    // check for auto_reopen
+    if (conn.isClosed && autoReopen.val) openConn
+
+    // exec query
+    return conn.sql(query).prepare.execute(params)
   }
 
   ** Verify sql schema matches current CStore schema.

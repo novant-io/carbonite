@@ -12,12 +12,13 @@
 
 internal const class PostgresStoreImpl : StoreImpl
 {
-  new make(Str dbhost, Str dbname, Str username, Str password)
+  new make(Str dbhost, Str dbname, Str username, Str password, Str:Obj opts)
   {
     query := ["user":username, "password":password]
-    uri   := `jdbc:postgresql://${dbhost}/${dbname}`.plusQuery(query)
-    conn  := makeConn("org.postgresql.Driver", uri.encode)
-    this.connRef.val = Unsafe(conn)
+    this.driver  = "org.postgresql.Driver"
+    this.connStr = `jdbc:postgresql://${dbhost}/${dbname}`.plusQuery(query).encode
+    this.opts = opts
+    this.init
   }
 
   override Str[] describeTable(CTable table)

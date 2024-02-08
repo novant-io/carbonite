@@ -70,7 +70,7 @@ class SqliteTest : Test
 
   private CStore makeStore()
   {
-    CStore.openSqlite(dbfile, [,])
+    CStore.openSqlite(dbfile, [:], [,])
   }
 
   private Void verifyCol(CStore store, CCol col, Str test)

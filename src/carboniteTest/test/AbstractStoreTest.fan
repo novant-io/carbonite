@@ -43,16 +43,24 @@ abstract class AbstractStoreTest : Test
   }
 
   **
+  ** Convenience for `eachImplOpts` with no options.
+  **
+  Void eachImpl(Obj[] tables, |CStore store| func)
+  {
+    eachImplOpts(tables, [:], func)
+  }
+
+  **
   ** Test each database impl. This function will reopen a new CStore
   ** instance to the existing database.  The database will be cleared
   ** and reset on entry to each test harness method.
   **
-  Void eachImpl(Obj[] tables, |CStore store| func)
+  Void eachImplOpts(Obj[] tables, Str:Obj opts, |CStore store| func)
   {
     if (sqlite)
     {
       echo("   Impl: sqlite   $tables")
-      store := CStore.openSqlite(sqliteFile, tables)
+      store := CStore.openSqlite(sqliteFile, opts, tables)
       try func(store)
       finally store.close
     }
@@ -60,7 +68,7 @@ abstract class AbstractStoreTest : Test
     if (postgres)
     {
       echo("   Impl: postgres $tables")
-      store := CStore.openPostgres("localhost", dbname, dbuser, dbpass, tables)
+      store := CStore.openPostgres("localhost", dbname, dbuser, dbpass, opts, tables)
       try func(store)
       finally store.close
     }
@@ -69,13 +77,13 @@ abstract class AbstractStoreTest : Test
   **
   ** Test each database impl throws SqlErr.
   **
-  Void eachImplErr(Obj[] tables)
+  Void eachImplErr(Obj[] tables, Str:Obj opts := [:])
   {
     echo("   Impl: sqlite   $tables")
-    verifySqlErr |->| { x := CStore.openSqlite(sqliteFile, tables) }
+    verifySqlErr |->| { x := CStore.openSqlite(sqliteFile, opts, tables) }
 
     echo("   Impl: postgres $tables")
-    verifySqlErr |->| { x := CStore.openPostgres("localhost", dbname, dbuser, dbpass, tables) }
+    verifySqlErr |->| { x := CStore.openPostgres("localhost", dbname, dbuser, dbpass, opts, tables) }
   }
 
   ** Verify that the given rec instance matches the given tag list.

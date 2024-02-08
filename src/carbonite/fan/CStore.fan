@@ -14,16 +14,16 @@
 const class CStore
 {
   ** Return a new CarbonStore for the given sqlite file and table schema.
-  static CStore openSqlite(File file, Obj[] tables)
+  static CStore openSqlite(File file, Str:Obj opts, Obj[] tables)
   {
-    impl := SqliteStoreImpl(file)
+    impl := SqliteStoreImpl(file, opts)
     return init(impl, tables)
   }
 
   ** Return a new CarbonStore for the given postgres connection and table schema.
-  static CStore openPostgres(Str dbhost, Str dbname, Str username, Str password, Obj[] tables)
+  static CStore openPostgres(Str dbhost, Str dbname, Str username, Str password, Str:Obj opts, Obj[] tables)
   {
-    impl := PostgresStoreImpl(dbhost, dbname, username, password)
+    impl := PostgresStoreImpl(dbhost, dbname, username, password, opts)
     return init(impl, tables)
   }
 
