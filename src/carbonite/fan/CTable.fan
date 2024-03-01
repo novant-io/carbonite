@@ -69,6 +69,26 @@ abstract const class CTable
     return store.impl.create(this, fields)
   }
 
+  ** Batch create a list of new records in this table with given
+  ** list of new field values.  Returns list of new record ids.
+  Int[] createAll([Str:Obj?][] rows)
+  {
+    // TODO: is it more efficient to impl some of
+    // these checks in the StoreImpl loop?
+    //  - verify cols
+    //  - generate scoped ids
+    //  - check non-nullable?
+
+    // find union of all column names
+    cols := Str:Str[:]
+    rows.each |r| {
+      r.each |v,k| { cols[k] = k }
+    }
+
+    // batch create
+    return store.impl.createAll(this, cols.keys, rows)
+  }
+
   ** Get record by id.
   CRec? get(Int id)
   {

@@ -8,6 +8,8 @@
 
 using concurrent
 using [java] java.lang::Class as JClass
+using [java] java.sql::Connection as JConnection
+using [java] java.sql::Statement as JStatement
 
 *************************************************************************
 ** StoreImpl
@@ -199,6 +201,69 @@ internal abstract const class StoreImpl
     // TODO: for now we require an id column
     Int id := (res as List).first
     return id
+  }
+
+  ** Create a new record in sql database and return new id.
+  virtual Int[] createAll(CTable table, Str[] cols, [Str:Obj?][] rows)
+  {
+    // TODO: looks like psql can use COPY for much better performance?
+
+    // TODO: test perf with setAutoCommit(false)
+    // TODO: setTransactionIsolation?
+
+    // TODO: do we auto break up rows into batch sizes?
+    //  - is this a CStore config?
+    //  - or does this method take an `opts` argument?
+
+    // TODO: we can probably just nuke all the peer stuff and
+    // directly use the JDBC APIs; a lot unneeded overhead down
+    // in that layer
+
+    // TODO: for now do all work inside the lock; but I think
+    // on the execute needs to go here; add a concurrent unit
+    // test to flush this out
+    if (!writeLock.tryLock(10sec)) throw InterruptedErr("Lock acquire failed")
+    try
+    {
+      // build sql statemen
+      sql := StrBuf()
+      sql.add("insert into ").add(table.name).add(" (")
+      cols.each |c,i|
+      {
+        if (i > 0) sql.addChar(',')
+        sql.add(c)
+      }
+      sql.add(") values(")
+      cols.each |c,i|
+      {
+        if (i > 0) sql.addChar(',')
+        sql.addChar('?')
+      }
+      sql.addChar(')')
+      // echo("> $sql")
+
+      // get stmt instance
+      JConnection? jconn := conn->java
+      ps := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
+
+      // batch add
+      vals := List.makeObj(cols.size)
+      rows.each |row|
+      {
+        vals.clear
+        cols.each |c,i| { ps.setObject(i+1, row[c]) }
+        ps.addBatch
+      }
+
+      // execute then collect ids
+      ps.executeBatch
+// TODO: this is not impl on sqlite; how should this work?
+      ids := List.make(Int#, rows.size)
+      rs  := ps.getGeneratedKeys
+      while (rs.next) { ids.add(rs.getLong(1)) }
+      return ids
+    }
+    finally { writeLock.unlock }
   }
 
   ** Return result from select sql statement.

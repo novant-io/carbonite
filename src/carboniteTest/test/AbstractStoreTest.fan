@@ -45,7 +45,7 @@ abstract class AbstractStoreTest : Test
   **
   ** Convenience for `eachImplOpts` with no options.
   **
-  Void eachImpl(Obj[] tables, |CStore store| func)
+  Void eachImpl(Obj[] tables, |CStore store, Str impl| func)
   {
     eachImplOpts(tables, [:], func)
   }
@@ -55,13 +55,13 @@ abstract class AbstractStoreTest : Test
   ** instance to the existing database.  The database will be cleared
   ** and reset on entry to each test harness method.
   **
-  Void eachImplOpts(Obj[] tables, Str:Obj opts, |CStore store| func)
+  Void eachImplOpts(Obj[] tables, Str:Obj opts, |CStore store, Str impl| func)
   {
     if (sqlite)
     {
       echo("   Impl: sqlite   $tables")
       store := CStore.openSqlite(sqliteFile, opts, tables)
-      try func(store)
+      try func(store, "sqlite")
       finally store.close
     }
 
@@ -69,7 +69,7 @@ abstract class AbstractStoreTest : Test
     {
       echo("   Impl: postgres $tables")
       store := CStore.openPostgres("localhost", dbname, dbuser, dbpass, opts, tables)
-      try func(store)
+      try func(store, "postgres")
       finally store.close
     }
   }

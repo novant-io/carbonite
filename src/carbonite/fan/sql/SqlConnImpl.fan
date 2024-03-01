@@ -77,4 +77,6 @@ internal class SqlConnImpl : SqlConn
   **
   override native Void rollback()
 
+  // TODO
+  @NoDoc native Obj java()
 }
