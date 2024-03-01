@@ -38,6 +38,9 @@ internal abstract const class StoreImpl
   protected const [Str:Obj]? opts
   private const AtomicBool autoReopen := AtomicBool(false)
 
+  ** Write lock.
+  private const Lock writeLock := Lock.makeReentrant
+
   ** Create SqlConn instance for given driver and connection info.
   protected Void openConn()
   {
@@ -84,6 +87,18 @@ internal abstract const class StoreImpl
 
     // exec query
     return conn.sql(query).prepare.execute(params)
+  }
+
+  ** Execute sql query with params inside write lock.
+  protected Obj execWrite(Str query, [Str:Obj]? params := null)
+  {
+    // check for auto_reopen
+    if (conn.isClosed && autoReopen.val) openConn
+
+    // exec write
+    if (!writeLock.tryLock(10sec)) throw InterruptedErr("Lock acquire failed")
+    try { return conn.sql(query).prepare.execute(params) }
+    finally { writeLock.unlock }
   }
 
   ** Verify sql schema matches current CStore schema.
