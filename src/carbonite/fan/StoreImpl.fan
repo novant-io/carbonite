@@ -206,9 +206,10 @@ internal abstract const class StoreImpl
   ** Create a new record in sql database and return new id.
   virtual Int[] createAll(CTable table, Str[] cols, [Str:Obj?][] rows)
   {
+    JConnection? jconn
+
     // TODO: looks like psql can use COPY for much better performance?
 
-    // TODO: test perf with setAutoCommit(false)
     // TODO: setTransactionIsolation?
 
     // TODO: do we auto break up rows into batch sizes?
@@ -243,7 +244,8 @@ internal abstract const class StoreImpl
       // echo("> $sql")
 
       // get stmt instance
-      JConnection? jconn := conn->java
+      jconn = conn->java
+      jconn.setAutoCommit(false)
       ps := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
 
       // batch add
@@ -263,7 +265,13 @@ internal abstract const class StoreImpl
       while (rs.next) { ids.add(rs.getLong(1)) }
       return ids
     }
-    finally { writeLock.unlock }
+    finally
+    {
+      // TODO: reset auto-commit; but eventually I think we rework
+      // everything to use auto_commit=false
+      writeLock.unlock
+      jconn.setAutoCommit(true)
+    }
   }
 
   ** Return result from select sql statement.

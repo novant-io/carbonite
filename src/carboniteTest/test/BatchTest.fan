@@ -69,12 +69,6 @@ class BatchTest : AbstractStoreTest
     }
   }
 
-  ** use: $ fan carboniteTest::BatchTest.runPerf
-  private Void runPerf()
-  {
-    // TODO FIXIT
-  }
-
   private Void verifyBatch(CRec rec, Int id, Int orgId, Int scopedId, Str name, Str? pos)
   {
     verifyEq(rec->id,        id)
@@ -82,5 +76,59 @@ class BatchTest : AbstractStoreTest
     // verifyEq(rec->scoped_id, scopedId)
     verifyEq(rec->name,      name)
     verifyEq(rec->pos,       pos)
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// Perf
+//////////////////////////////////////////////////////////////////////////
+
+  // usage: $ fan carboniteTest::BatchTest.perf
+  private Void perf()
+  {
+    mode := Env.cur.args.first
+
+    echo("## Batch Performance Test ##")
+
+    // use batch test to start with clean slate
+    test := BatchTest()
+    test.typeof.field("sqlite")->setConst(test, false)
+    test.setup
+    test.eachImpl([BatchTestA#]) |ds,impl|
+    {
+      echo("> impl:      $impl")
+      CTable b := ds.table(BatchTestA#)
+
+      // gen rows
+      size := 100_000
+      rows := Obj[,]
+      size.times |i|
+      {
+        rows.add([
+          "org_id": 1,
+          "name": "Some Name ${i}",
+          "pos": "lead",
+        ])
+      }
+      echo("> test_rows: ${size.toLocale}")
+
+      switch (mode)
+      {
+        // test serial
+        case "serial":
+          ss := Duration.now
+          rows.each |r| { b.create(r) }
+          se := Duration.now
+          verifyEq(b.size, size)
+          echo("# serial:    ${(se-ss).toMillis.toLocale}ms")
+
+        // test batch
+        case "batch":
+          bs := Duration.now
+          b.createAll(rows)
+          be := Duration.now
+          verifyEq(b.size, size)
+          echo("# batch:     ${(be-bs).toMillis.toLocale}ms")
+      }
+    }
   }
 }
