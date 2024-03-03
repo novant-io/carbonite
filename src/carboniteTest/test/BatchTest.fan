@@ -20,7 +20,7 @@ const class BatchTestA : CTable
     CCol("org_id",   Int#,  [:]),
     CCol("name",     Str#,  [:]),
     CCol("pos",      Str?#, [:]),
-    // CCol("scope_id", Int#, ["auto_increment":true, "scoped_by":"org_id"]),
+    CCol("scope_id", Int#, ["auto_increment":true, "scoped_by":"org_id"]),
   ]
 
   // // not needed for test; just a sanity check
@@ -71,11 +71,12 @@ class BatchTest : AbstractStoreTest
 
   private Void verifyBatch(CRec rec, Int id, Int orgId, Int scopedId, Str name, Str? pos)
   {
-    verifyEq(rec->id,        id)
-    verifyEq(rec->org_id,    orgId)
-    // verifyEq(rec->scoped_id, scopedId)
-    verifyEq(rec->name,      name)
-    verifyEq(rec->pos,       pos)
+    verifyEq(rec->id,       id)
+    verifyEq(rec->org_id,   orgId)
+    // TODO
+    // verifyEq(rec->scope_id, scopedId)
+    verifyEq(rec->name,     name)
+    verifyEq(rec->pos,      pos)
   }
 
 //////////////////////////////////////////////////////////////////////////

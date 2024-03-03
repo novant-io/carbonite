@@ -234,43 +234,62 @@ internal abstract const class StoreImpl
   ** Create a new record in sql database and return new id.
   virtual Int[] createAll(CTable table, Str[] cols, [Str:Obj?][] rows)
   {
-    JConnection? jconn
-
     // TODO: looks like psql can use COPY for much better performance?
-
     // TODO: setTransactionIsolation?
-
     // TODO: do we auto break up rows into batch sizes?
     //  - is this a CStore config?
-    //  - or does this method take an `opts` argument?
+    //  - or does this method take an `opts` argument -> batch_size?
 
     // TODO: we can probably just nuke all the peer stuff and
     // directly use the JDBC APIs; a lot unneeded overhead down
     // in that layer
 
-    // TODO: for now do all work inside the lock; but I think
-    // only the execute needs to go here; add a concurrent unit
-    // test to flush this out
-    return onLockExec |conn|
+    onLockExec |conn|
     {
+      JConnection? jconn
       try
       {
-        // build sql statement
-        sql := CUtil.sqlInsert(table, cols)
-        // echo("> $sql")
+        // map to CCol and verify table schema
+        CCol[] ccols := [,]
+        cols.each |n| {
+          ccols.add(table.cmap[n] ?: throw ArgErr("Field not a column: '${n}'"))
+        }
+
+        // check if we need to generate scoped ids
+        Str? scopeCol
+        if (table.hasScopedId)
+        {
+          // add scoped_id if not explicit
+          scopeCol = table.cols.find |c| { c.scopedBy != null }?.name
+          if (!cols.contains(scopeCol)) cols.add(scopeCol)
+
+          // {
+          //   sn := c.scopedBy
+          //   sv := fields[sn]
+          //   if (sv == null) throw ArgErr("Missing scoped column '${sn}'")
+          //   mv := store.impl.select(this, c.name, [sn:sv]).max |a,b| { a.getInt(c.name) <=> b.getInt(c.name) }
+          //   nv := mv == null ? 1 : mv.getInt(c.name)+1
+          //   fields[c.name] = nv
+          // }
+        }
 
         // get stmt instance
         jconn = conn->java
         jconn.setAutoCommit(false)
-        ps := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
+        sql := CUtil.sqlInsert(table, cols)
+        ps  := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
 
+x := 1
         // batch add
         vals := List.makeObj(cols.size)
         rows.each |row|
         {
-  // TODO: scoped_id
           vals.clear
-          cols.each |c,i| { ps.setObject(i+1, row[c]) }
+          cols.each |c,i|
+          {
+            if (c == scopeCol) ps.setObject(i+1, x++)
+            else ps.setObject(i+1, row[c])
+          }
           ps.addBatch
         }
 
@@ -278,6 +297,7 @@ internal abstract const class StoreImpl
         ps.executeBatch
         jconn.commit
   // TODO: this is not impl on sqlite; how should this work?
+  // TODO: make this a virtual func -> StoreImpl.getGenKeys
         ids := List.make(Int#, rows.size)
         rs  := ps.getGeneratedKeys
         while (rs.next) { ids.add(rs.getLong(1)) }

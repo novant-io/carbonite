@@ -147,6 +147,7 @@ abstract const class CTable
   {
     this.storeRef.val = store
     this.cmapRef.val  = Str:CCol[:].setList(cols) |c| { c.name }.toImmutable
+    this.scopedIdRef.val = cols.any |c| { c.scopedBy != null }
   }
 
   private Void genScopedIds(Str:Obj? ids)
@@ -156,6 +157,9 @@ abstract const class CTable
   private CStore store() { storeRef.val }
   private const AtomicRef storeRef := AtomicRef(null)
 
-  private Str:CCol cmap() { cmapRef.val }
+  internal Str:CCol cmap() { cmapRef.val }
   private const AtomicRef cmapRef := AtomicRef(null)
+
+  internal Bool hasScopedId() { scopedIdRef.val }
+  private const AtomicBool scopedIdRef := AtomicBool(false)
 }
