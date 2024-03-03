@@ -105,9 +105,9 @@ internal abstract const class StoreImpl
 
 // TODO: goes away...
   ** Execute sql querty with params and return results as Row[] list.
-  protected Row[] exec(Str query, [Str:Obj]? params := null)
+  protected Row[] _exec(Str query, [Str:Obj]? params := null)
   {
-    res := execRaw(query, params)
+    res := _execRaw(query, params)
     if (res is Row[]) return res
     if (res is Row) return [res]
     return Row#.emptyList
@@ -115,11 +115,8 @@ internal abstract const class StoreImpl
 
 // TODO: goes away...
   ** Execute sql querty with params and return results as Row[] list.
-  protected Obj execRaw(Str query, [Str:Obj]? params := null)
+  protected Obj _execRaw(Str query, [Str:Obj]? params := null)
   {
-    // check for auto_reopen
-    if (conn.isClosed && autoReopen.val) openConn
-
     // exec query
     return conn.sql(query).prepare.execute(params)
   }
@@ -159,7 +156,7 @@ internal abstract const class StoreImpl
           .addAll(t.cols.map |c| { colToSql(store, c) })
           .addAll(t.constraints.map |c| { constraintToSql(c) })
           .join(",")
-        exec("create table if not exists ${t.name} (${cstr})")
+        _exec("create table if not exists ${t.name} (${cstr})")
 
         // check if we need to add cols
         has := describeTable(t)
@@ -169,7 +166,7 @@ internal abstract const class StoreImpl
           if (cur == null)
           {
             // add missing column
-            exec("alter table ${t.name} add column ${colToSql(store, c)}")
+            _exec("alter table ${t.name} add column ${colToSql(store, c)}")
           }
           else
           {
@@ -215,7 +212,7 @@ internal abstract const class StoreImpl
   {
     onLockExec |conn|
     {
-      r := exec("select count(1) from ${table.name}").first
+      r := _exec("select count(1) from ${table.name}").first
       return r.get(r.cols.first)
     }
   }
@@ -227,7 +224,7 @@ internal abstract const class StoreImpl
     {
       cols := fields.keys.join(",") |c| { "\"${c}\"" }
       vars := fields.keys.join(",") |n| { "@${n}" }
-      res := execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
+      res := _execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
       // TODO: for now we require an id column
       Int id := (res as List).first
       return id
@@ -259,21 +256,7 @@ internal abstract const class StoreImpl
       try
       {
         // build sql statement
-        sql := StrBuf()
-        sql.add("insert into ").add(table.name).add(" (")
-        cols.each |c,i|
-        {
-  // TODO: save off scopedIx
-          if (i > 0) sql.addChar(',')
-          sql.add(c)
-        }
-        sql.add(") values(")
-        cols.each |c,i|
-        {
-          if (i > 0) sql.addChar(',')
-          sql.addChar('?')
-        }
-        sql.addChar(')')
+        sql := CUtil.sqlInsert(table, cols)
         // echo("> $sql")
 
         // get stmt instance
@@ -322,7 +305,7 @@ internal abstract const class StoreImpl
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
     return onLockExec |conn|
     {
-      return exec(sql, where).map |row|
+      return _exec(sql, where).map |row|
       {
         // TODO FIXIT YOWZERS
         map := Str:Obj?[:]
@@ -344,7 +327,7 @@ internal abstract const class StoreImpl
     onLockExec |conn|
     {
       assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
-      exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
+      _exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
       // return new rec
       return null
     }
@@ -355,7 +338,7 @@ internal abstract const class StoreImpl
   {
     onLockExec |conn|
     {
-      exec("delete from ${table.name} where id = ${id}")
+      _exec("delete from ${table.name} where id = ${id}")
     }
   }
 
@@ -367,7 +350,7 @@ internal abstract const class StoreImpl
       // TODO: make this DRY (see select)
       cond := StrBuf()
       where.each |v,n| { cond.join("${n} = @${n}", " and ") }
-      exec("delete from ${table.name} where ${cond}", where)
+      _exec("delete from ${table.name} where ${cond}", where)
       return null
     }
   }
