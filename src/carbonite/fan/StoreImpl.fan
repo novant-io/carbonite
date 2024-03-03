@@ -83,7 +83,7 @@ internal abstract const class StoreImpl
 //////////////////////////////////////////////////////////////////////////
 
   ** Aquire connection lock and perform given work before releasing lock.
-  protected Obj onLockExec(|SqlConn->Obj| f)
+  protected Obj? onLockExec(|SqlConn->Obj?| f)
   {
     if (!connLock.tryLock(connLockTimeout)) throw InterruptedErr("Lock acquire failed")
     try
@@ -103,10 +103,7 @@ internal abstract const class StoreImpl
   ** Default timeout to aquire conn lock
   private const Duration connLockTimeout := 10sec
 
-//////////////////////////////////////////////////////////////////////////
-// Impl
-//////////////////////////////////////////////////////////////////////////
-
+// TODO: goes away...
   ** Execute sql querty with params and return results as Row[] list.
   protected Row[] exec(Str query, [Str:Obj]? params := null)
   {
@@ -116,6 +113,7 @@ internal abstract const class StoreImpl
     return Row#.emptyList
   }
 
+// TODO: goes away...
   ** Execute sql querty with params and return results as Row[] list.
   protected Obj execRaw(Str query, [Str:Obj]? params := null)
   {
@@ -125,6 +123,10 @@ internal abstract const class StoreImpl
     // exec query
     return conn.sql(query).prepare.execute(params)
   }
+
+//////////////////////////////////////////////////////////////////////////
+// Impl
+//////////////////////////////////////////////////////////////////////////
 
   ** Verify sql schema matches current CStore schema.
   virtual This verifySchema(CStore store)
@@ -211,19 +213,25 @@ internal abstract const class StoreImpl
   ** Effeciently return number of rows for given table.
   virtual Int tableSize(CTable table)
   {
-    r := exec("select count(1) from ${table.name}").first
-    return r.get(r.cols.first)
+    onLockExec |conn|
+    {
+      r := exec("select count(1) from ${table.name}").first
+      return r.get(r.cols.first)
+    }
   }
 
   ** Create a new record in sql database and return new id.
   virtual Int create(CTable table, Str:Obj fields)
   {
-    cols := fields.keys.join(",") |c| { "\"${c}\"" }
-    vars := fields.keys.join(",") |n| { "@${n}" }
-    res := execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
-    // TODO: for now we require an id column
-    Int id := (res as List).first
-    return id
+    onLockExec |conn|
+    {
+      cols := fields.keys.join(",") |c| { "\"${c}\"" }
+      vars := fields.keys.join(",") |n| { "@${n}" }
+      res := execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
+      // TODO: for now we require an id column
+      Int id := (res as List).first
+      return id
+    }
   }
 
   ** Create a new record in sql database and return new id.
@@ -312,42 +320,56 @@ internal abstract const class StoreImpl
       sql += " where ${cond}"
     }
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
-    return exec(sql, where).map |row|
+    return onLockExec |conn|
     {
-      // TODO FIXIT YOWZERS
-      map := Str:Obj?[:]
-      row.cols.each |rc|
+      return exec(sql, where).map |row|
       {
-        c := table.cols.find |c| { c.name == rc.name }
-        if (c == null) return
-        v := row.get(rc)
-        if (v != null) map[c.name] = sqlToFan(c, v)
+        // TODO FIXIT YOWZERS
+        map := Str:Obj?[:]
+        row.cols.each |rc|
+        {
+          c := table.cols.find |c| { c.name == rc.name }
+          if (c == null) return
+          v := row.get(rc)
+          if (v != null) map[c.name] = sqlToFan(c, v)
+        }
+        return CRec(map)
       }
-      return CRec(map)
     }
   }
 
   ** Update an existing record in sql database.
   virtual Void update(CTable table, Int id, Str:Obj? fields)
   {
-    assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
-    exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
-    // return new rec
+    onLockExec |conn|
+    {
+      assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
+      exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
+      // return new rec
+      return null
+    }
   }
 
   ** Delete an existing record in sql database.
   virtual Void delete(CTable table, Int id)
   {
-    exec("delete from ${table.name} where id = ${id}")
+    onLockExec |conn|
+    {
+      exec("delete from ${table.name} where id = ${id}")
+    }
   }
 
   ** Delete an existing record based on given 'where' clause.
   virtual Void deleteBy(CTable table, Str:Obj where)
   {
-    // TODO: make this DRY (see select)
-    cond := StrBuf()
-    where.each |v,n| { cond.join("${n} = @${n}", " and ") }
-    exec("delete from ${table.name} where ${cond}", where)
+    onLockExec |conn|
+    {
+      // TODO: make this DRY (see select)
+      cond := StrBuf()
+      where.each |v,n| { cond.join("${n} = @${n}", " and ") }
+      exec("delete from ${table.name} where ${cond}", where)
+      return null
+    }
   }
 
   // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
