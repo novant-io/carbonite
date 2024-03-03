@@ -17,6 +17,11 @@ using [java] java.sql::Statement as JStatement
 
 internal abstract const class StoreImpl
 {
+
+//////////////////////////////////////////////////////////////////////////
+// Init
+//////////////////////////////////////////////////////////////////////////
+
   ** Post contructor callback.
   protected Void init()
   {
@@ -40,8 +45,9 @@ internal abstract const class StoreImpl
   protected const [Str:Obj]? opts
   private const AtomicBool autoReopen := AtomicBool(false)
 
-  ** Write lock.
-  private const Lock writeLock := Lock.makeReentrant
+//////////////////////////////////////////////////////////////////////////
+// Open/Close
+//////////////////////////////////////////////////////////////////////////
 
   ** Create SqlConn instance for given driver and connection info.
   protected Void openConn()
@@ -72,6 +78,35 @@ internal abstract const class StoreImpl
     return conn.isClosed
   }
 
+//////////////////////////////////////////////////////////////////////////
+// Lock/Exec
+//////////////////////////////////////////////////////////////////////////
+
+  ** Aquire connection lock and perform given work before releasing lock.
+  protected Obj onLockExec(|SqlConn->Obj| f)
+  {
+    if (!connLock.tryLock(connLockTimeout)) throw InterruptedErr("Lock acquire failed")
+    try
+    {
+      // check for auto_reopen
+      if (conn.isClosed && autoReopen.val) openConn
+
+      // exec callback
+      return f(conn)
+    }
+    finally { connLock.unlock }
+  }
+
+  ** JDBC connection lock.
+  private const Lock connLock := Lock.makeReentrant
+
+  ** Default timeout to aquire conn lock
+  private const Duration connLockTimeout := 10sec
+
+//////////////////////////////////////////////////////////////////////////
+// Impl
+//////////////////////////////////////////////////////////////////////////
+
   ** Execute sql querty with params and return results as Row[] list.
   protected Row[] exec(Str query, [Str:Obj]? params := null)
   {
@@ -89,18 +124,6 @@ internal abstract const class StoreImpl
 
     // exec query
     return conn.sql(query).prepare.execute(params)
-  }
-
-  ** Execute sql query with params inside write lock.
-  protected Obj execWrite(Str query, [Str:Obj]? params := null)
-  {
-    // check for auto_reopen
-    if (conn.isClosed && autoReopen.val) openConn
-
-    // exec write
-    if (!writeLock.tryLock(10sec)) throw InterruptedErr("Lock acquire failed")
-    try { return conn.sql(query).prepare.execute(params) }
-    finally { writeLock.unlock }
   }
 
   ** Verify sql schema matches current CStore schema.
@@ -221,56 +244,60 @@ internal abstract const class StoreImpl
     // in that layer
 
     // TODO: for now do all work inside the lock; but I think
-    // on the execute needs to go here; add a concurrent unit
+    // only the execute needs to go here; add a concurrent unit
     // test to flush this out
-    if (!writeLock.tryLock(10sec)) throw InterruptedErr("Lock acquire failed")
-    try
+    return onLockExec |conn|
     {
-      // build sql statemen
-      sql := StrBuf()
-      sql.add("insert into ").add(table.name).add(" (")
-      cols.each |c,i|
+      try
       {
-        if (i > 0) sql.addChar(',')
-        sql.add(c)
+        // build sql statement
+        sql := StrBuf()
+        sql.add("insert into ").add(table.name).add(" (")
+        cols.each |c,i|
+        {
+  // TODO: save off scopedIx
+          if (i > 0) sql.addChar(',')
+          sql.add(c)
+        }
+        sql.add(") values(")
+        cols.each |c,i|
+        {
+          if (i > 0) sql.addChar(',')
+          sql.addChar('?')
+        }
+        sql.addChar(')')
+        // echo("> $sql")
+
+        // get stmt instance
+        jconn = conn->java
+        jconn.setAutoCommit(false)
+        ps := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
+
+        // batch add
+        vals := List.makeObj(cols.size)
+        rows.each |row|
+        {
+  // TODO: scoped_id
+          vals.clear
+          cols.each |c,i| { ps.setObject(i+1, row[c]) }
+          ps.addBatch
+        }
+
+        // execute then collect ids
+        ps.executeBatch
+        jconn.commit
+  // TODO: this is not impl on sqlite; how should this work?
+        ids := List.make(Int#, rows.size)
+        rs  := ps.getGeneratedKeys
+        while (rs.next) { ids.add(rs.getLong(1)) }
+        return ids
       }
-      sql.add(") values(")
-      cols.each |c,i|
+      finally
       {
-        if (i > 0) sql.addChar(',')
-        sql.addChar('?')
+        // TODO: reset auto-commit; but eventually I think we rework
+        // everything to use auto_commit=false
+        jconn.setAutoCommit(true)
       }
-      sql.addChar(')')
-      // echo("> $sql")
-
-      // get stmt instance
-      jconn = conn->java
-      jconn.setAutoCommit(false)
-      ps := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
-
-      // batch add
-      vals := List.makeObj(cols.size)
-      rows.each |row|
-      {
-        vals.clear
-        cols.each |c,i| { ps.setObject(i+1, row[c]) }
-        ps.addBatch
-      }
-
-      // execute then collect ids
-      ps.executeBatch
-// TODO: this is not impl on sqlite; how should this work?
-      ids := List.make(Int#, rows.size)
-      rs  := ps.getGeneratedKeys
-      while (rs.next) { ids.add(rs.getLong(1)) }
-      return ids
-    }
-    finally
-    {
-      // TODO: reset auto-commit; but eventually I think we rework
-      // everything to use auto_commit=false
-      writeLock.unlock
-      jconn.setAutoCommit(true)
     }
   }
 
