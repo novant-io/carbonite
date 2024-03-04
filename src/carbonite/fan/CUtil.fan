@@ -35,4 +35,20 @@ internal const class CUtil
     buf.addChar(')')
     return buf.toStr
   }
+
+  **
+  ** Create delete sql string:
+  **
+  **   delete from xxx where a = ? and b = ?
+  **
+  static Str sqlDelete(CTable table, Str[] cols)
+  {
+    buf := StrBuf()
+    buf.add("delete from ").add(table.name).add(" where")
+    cols.each |c,i| {
+      if (i > 0) buf.add(" and")
+      buf.add(" \"").add(c).add("\" = ?")
+    }
+    return buf.toStr
+  }
 }
