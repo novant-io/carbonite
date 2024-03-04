@@ -228,6 +228,12 @@ public class SqlConnImplPeer
     return jconn;
   }
 
+  // TODO
+  public Object fanToSqlObj(SqlConnImpl self, Object fan, Object jconn)
+  {
+    return SqlUtil.fanToSqlObj(fan, (Connection)jconn);
+  }
+
 //////////////////////////////////////////////////////////////////////////
 // Fields
 //////////////////////////////////////////////////////////////////////////

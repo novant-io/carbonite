@@ -24,7 +24,7 @@ internal const class CUtil
     cols.each |c,i|
     {
       if (i > 0) buf.addChar(',')
-      buf.add(c.name)
+      buf.addChar('"').add(c.name).addChar('"')
     }
     buf.add(") values(")
     cols.each |c,i|

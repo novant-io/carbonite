@@ -33,6 +33,8 @@ class EscapeTest : AbstractStoreTest
     tables := [EscapeTestA#]
     eachImpl(tables) |s|
     {
+      // NOTE: this tests that desc gets wrapped as "desc" in sql statements
+
       // verify empty
       CTable p := s.table(EscapeTestA#)
       verifyEq(p.size, 0)

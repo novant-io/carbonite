@@ -257,15 +257,8 @@ internal abstract const class StoreImpl
   ** Create a new record in sql database and return new id.
   virtual Int create(CTable table, Str:Obj fields)
   {
-    onLockExec |conn|
-    {
-      cols := fields.keys.join(",") |c| { "\"${c}\"" }
-      vars := fields.keys.join(",") |n| { "@${n}" }
-      res := _execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
-      // TODO: for now we require an id column
-      Int id := (res as List).first
-      return id
-    }
+    cols := fields.keys
+    return createAll(table, fields.keys, [fields]).first
   }
 
   ** Create a new record in sql database and return new id.
@@ -295,6 +288,13 @@ internal abstract const class StoreImpl
         {
           c := table.cmap[n] ?: throw ArgErr("Field not a column: '${n}'")
           cols.add(c)
+        }
+
+        // verify non-null schema
+        table.cmap.vals.each |c|
+        {
+          if (c.req && !cols.contains(c) && c.scopedBy == null)
+            throw ArgErr("Missing non-nullable column value for '${c.name}'")
         }
 
         // check if we need to generate scoped ids
@@ -350,8 +350,17 @@ internal abstract const class StoreImpl
             }
             else
             {
-              // else pick up from args
-              ps.setObject(i+1, row[c.name])
+              // else pick up from args and verify non-null
+              v := row[c.name]
+              if (v == null && c.req) throw ArgErr("Missing non-nullable column value for '${c.name}'")
+
+              // TODO FIXIT!
+              if (v != null)
+              {
+                v = fanToSql(c, v)
+                v = conn->fanToSqlObj(v, jconn)
+              }
+              ps.setObject(i+1, v)
             }
           }
           ps.addBatch
@@ -366,6 +375,13 @@ internal abstract const class StoreImpl
         rs  := ps.getGeneratedKeys
         while (rs.next) { ids.add(rs.getLong(1)) }
         return ids
+      }
+      catch (Err err)
+      {
+        // always wrap with ArgErr or SqlErr
+        if (err is ArgErr) throw err
+        if (err is SqlErr) throw err
+        throw SqlErr(err.msg, err)
       }
       finally
       {

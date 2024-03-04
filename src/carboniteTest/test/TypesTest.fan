@@ -49,10 +49,17 @@ class TypesTest : AbstractStoreTest
       r := t.get(1)
       verifyEq(r->str, null)
 
+      // update
       t.update(1, ["str":"foo bar"])
       r = t.get(1)
       verifyEq(r->str, "foo bar")
       verifyEq(r.getStr("str"), "foo bar")
+
+      // create
+      t.create(["id":2, "str":"bar zar"])
+      r = t.get(2)
+      verifyEq(r->str, "bar zar")
+      verifyEq(r.getStr("str"), "bar zar")
     }
   }
 
@@ -78,6 +85,12 @@ class TypesTest : AbstractStoreTest
       r = t.get(1)
       verifyEq(r->bool, null)
       verifyEq(r.getBool("bool"), null)
+
+      // create
+      t.create(["id":2, "bool":true])
+      r = t.get(2)
+      verifyEq(r->bool, true)
+      verifyEq(r.getBool("bool"), true)
     }
   }
 
@@ -93,6 +106,12 @@ class TypesTest : AbstractStoreTest
       r = t.get(1)
       verifyEq(r->int, 25)
       verifyEq(r.getInt("int"), 25)
+
+      // create
+      t.create(["id":2, "bool":true])
+      r = t.get(2)
+      verifyEq(r->bool, true)
+      verifyEq(r.getBool("bool"), true)
     }
   }
 
@@ -113,6 +132,12 @@ class TypesTest : AbstractStoreTest
       r = t.get(1)
       verifyEq(r->int_list, Int[,])
       verifyEq(r.getIntList("int_list"), Int[,])
+
+      // create
+      t.create(["id":2, "int_list":[1,2,3]])
+      r = t.get(2)
+      verifyEq(r->int_list, [1,2,3])
+      verifyEq(r.getIntList("int_list"), [1,2,3])
     }
   }
 
@@ -130,6 +155,13 @@ class TypesTest : AbstractStoreTest
       r = t.get(1)
       verifyEq(r->date, d)
       verifyEq(r.getDate("date"), d)
+
+      // create
+      d2 := Date("2024-03-04")
+      t.create(["id":2, "date":d2])
+      r = t.get(2)
+      verifyEq(r->date, d2)
+      verifyEq(r.getDate("date"), d2)
     }
   }
 
@@ -150,6 +182,15 @@ class TypesTest : AbstractStoreTest
       verifyEq(r->datetime.toStr, "2022-08-03T19:27:47Z UTC")
       verifyEq(r.getDateTime("datetime"), dt)
       verifyEq(r.getDateTime("datetime", ny).toStr, "2022-08-03T15:27:47-04:00 New_York")
+
+      // create
+      dt2 := DateTime("2024-03-04T10:43:00-05:00 New_York")
+      t.create(["id":2, "datetime":dt2])
+      r = t.get(2)
+      verifyEq(r->datetime, dt2)
+      verifyEq(r->datetime.toStr, "2024-03-04T15:43:00Z UTC")
+      verifyEq(r.getDateTime("datetime"), dt2)
+      verifyEq(r.getDateTime("datetime", ny).toStr, "2024-03-04T10:43:00-05:00 New_York")
     }
   }
 }

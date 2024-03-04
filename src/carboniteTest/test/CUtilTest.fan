@@ -24,6 +24,6 @@ class CUtilTest : Test
      CCol("c", Str#, [:]),
     ]
     Method m := Slot.find("carbonite::CUtil.sqlInsert")
-    verifyEq(m.call(e, c), "insert into employees (a,b,c) values(?,?,?)")
+    verifyEq(m.call(e, c), """insert into employees ("a","b","c") values(?,?,?)""")
   }
 }

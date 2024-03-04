@@ -40,33 +40,35 @@ abstract const class CTable
   ** return the new record id.
   Int create(Str:Obj? fields)
   {
-    // verify field cols
-    fields.each |v,k|
-    {
-      c := cmap[k]
-      if (c == null) throw ArgErr("Field not a column: '${k}'")
-    }
+    store.impl.create(this, fields)
 
-    // generate scoped ids
-    cols.each |c|
-    {
-      if (c.scopedBy == null) return
-      sn := c.scopedBy
-      sv := fields[sn]
-      if (sv == null) throw ArgErr("Missing scoped column '${sn}'")
-      mv := store.impl.select(this, c.name, [sn:sv]).max |a,b| { a.getInt(c.name) <=> b.getInt(c.name) }
-      nv := mv == null ? 1 : mv.getInt(c.name)+1
-      fields[c.name] = nv
-    }
+    // // verify field cols
+    // fields.each |v,k|
+    // {
+    //   c := cmap[k]
+    //   if (c == null) throw ArgErr("Field not a column: '${k}'")
+    // }
 
-    // check non-nullable cols
-    cmap.vals.each |c|
-    {
-      v := fields[c.name]
-      if (v == null && c.req) throw ArgErr("Missing non-nullable column value for '${c.name}'")
-    }
+    // // generate scoped ids
+    // cols.each |c|
+    // {
+    //   if (c.scopedBy == null) return
+    //   sn := c.scopedBy
+    //   sv := fields[sn]
+    //   if (sv == null) throw ArgErr("Missing scoped column '${sn}'")
+    //   mv := store.impl.select(this, c.name, [sn:sv]).max |a,b| { a.getInt(c.name) <=> b.getInt(c.name) }
+    //   nv := mv == null ? 1 : mv.getInt(c.name)+1
+    //   fields[c.name] = nv
+    // }
 
-    return store.impl.create(this, fields)
+    // // check non-nullable cols
+    // cmap.vals.each |c|
+    // {
+    //   v := fields[c.name]
+    //   if (v == null && c.req) throw ArgErr("Missing non-nullable column value for '${c.name}'")
+    // }
+
+    // return store.impl.create(this, fields)
   }
 
   ** Batch create a list of new records in this table with given

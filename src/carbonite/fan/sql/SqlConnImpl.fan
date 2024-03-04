@@ -79,4 +79,5 @@ internal class SqlConnImpl : SqlConn
 
   // TODO
   @NoDoc native Obj java()
+  @NoDoc native Obj fanToSqlObj(Obj val, Obj jconn)
 }
