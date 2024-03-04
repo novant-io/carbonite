@@ -140,6 +140,7 @@ abstract const class CTable
     store.impl.delete(this, id)
   }
 
+  ** Delete all records where all 'where' conditions are equal.
   Void deleteBy(Str:Obj where)
   {
     store.impl.deleteBy(this, where)
@@ -150,10 +151,6 @@ abstract const class CTable
     this.storeRef.val = store
     this.cmapRef.val  = Str:CCol[:].setList(cols) |c| { c.name }.toImmutable
     this.scopedIdRef.val = cols.any |c| { c.scopedBy != null }
-  }
-
-  private Void genScopedIds(Str:Obj? ids)
-  {
   }
 
   private CStore store() { storeRef.val }

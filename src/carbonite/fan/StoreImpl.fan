@@ -413,7 +413,7 @@ internal abstract const class StoreImpl
     }
   }
 
-  ** Delete an existing record based on given 'where' clause.
+  ** Delete existing records based on given 'where' clause.
   virtual Void deleteBy(CTable table, Str:Obj where)
   {
     onLockExec |conn|

@@ -77,6 +77,14 @@ class BatchTest : AbstractStoreTest
       verifyBatch(e.listAll[1], 2, 1, null, "Veronica Corningstone", "lead")
       verifyBatch(e.listAll[2], 3, 2, null, "Brian Fantana",         null)
       verifyBatch(e.listAll[3], 4, 3, null, "Brick Tamland",         "weather")
+
+      // batch delete
+      e.deleteBy(["org_id":1])
+      verifyEq(e.size, 2)
+      verifyEq(ds.table(BatchTestA#).size, 2)
+      verifyEq(ds.table(BatchTestA#).listAll.size, 2)
+      verifyBatch(e.listAll[0], 3, 2, null, "Brian Fantana", null)
+      verifyBatch(e.listAll[1], 4, 3, null, "Brick Tamland", "weather")
     }
   }
 
@@ -131,8 +139,8 @@ class BatchTest : AbstractStoreTest
   private Void perf()
   {
     mode  := Env.cur.args.first
-    table := BatchTestA#
-    // table := BatchTestB#
+    // table := BatchTestA#
+    table := BatchTestB#
 
     echo("## Batch Performance Test ##")
 
@@ -147,7 +155,6 @@ class BatchTest : AbstractStoreTest
 
       // gen rows
       size := 100_000
-      // size := 5_000
       rows := Obj[,]
       size.times |i|
       {
