@@ -34,11 +34,13 @@ abstract class AbstractStoreTest : Test
 
     if (postgres)
     {
-      Process { it.command=["dropdb", "-f", "--if-exists", dbname] }.run
-      echo("DROP DATABASE")
-      Actor.sleep(100ms)
-      Process { it.command=["bash", "-c", "psql postgres -U ${dbuser} -c 'create database ${dbname}'" ]}.run
-      Actor.sleep(100ms)
+      // drop current test database
+      psql_dropdb
+      while (psql_dbexists) { Actor.sleep(10ms) }
+
+      // create a fresh copy
+      psql_createdb
+      while (!psql_dbexists) { Actor.sleep(10ms) }
     }
   }
 
@@ -101,5 +103,30 @@ abstract class AbstractStoreTest : Test
   protected Void verifySqlErr(|This| func)
   {
     verifyErr(Type.find("carbonite::SqlErr")) { func(this) }
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// psql utils
+//////////////////////////////////////////////////////////////////////////
+
+  ** Return 'true' if test database exists.
+  private Bool psql_dbexists()
+  {
+    cmd  := "psql -lqt | cut -d \\| -f 1 | grep -qw ${dbname}"
+    exit := Process { it.command=["bash", "-c", cmd] }.run.join
+    return exit == 0
+  }
+
+  ** Drop the database if it exists.
+  private Void psql_dropdb()
+  {
+    Process { it.command=["dropdb", "-f", "--if-exists", dbname] }.run
+  }
+
+  ** Create new blank database.
+  private Void psql_createdb()
+  {
+    cmd := "psql postgres -U ${dbuser} -c 'create database ${dbname}'"
+    Process { it.command=["bash", "-c", cmd] }.run
   }
 }
