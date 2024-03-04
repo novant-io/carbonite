@@ -122,7 +122,7 @@ internal abstract const class StoreImpl
   }
 
 //////////////////////////////////////////////////////////////////////////
-// Impl
+// Schema
 //////////////////////////////////////////////////////////////////////////
 
   ** Verify sql schema matches current CStore schema.
@@ -207,6 +207,10 @@ internal abstract const class StoreImpl
   ** Return SQL column schema from database for given table name.
   abstract Str[] describeTable(CTable table)
 
+//////////////////////////////////////////////////////////////////////////
+// Query
+//////////////////////////////////////////////////////////////////////////
+
   ** Effeciently return number of rows for given table.
   virtual Int tableSize(CTable table)
   {
@@ -214,101 +218,6 @@ internal abstract const class StoreImpl
     {
       r := _exec("select count(1) from ${table.name}").first
       return r.get(r.cols.first)
-    }
-  }
-
-  ** Create a new record in sql database and return new id.
-  virtual Int create(CTable table, Str:Obj fields)
-  {
-    onLockExec |conn|
-    {
-      cols := fields.keys.join(",") |c| { "\"${c}\"" }
-      vars := fields.keys.join(",") |n| { "@${n}" }
-      res := _execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
-      // TODO: for now we require an id column
-      Int id := (res as List).first
-      return id
-    }
-  }
-
-  ** Create a new record in sql database and return new id.
-  virtual Int[] createAll(CTable table, Str[] cols, [Str:Obj?][] rows)
-  {
-    // TODO: looks like psql can use COPY for much better performance?
-    // TODO: setTransactionIsolation?
-    // TODO: do we auto break up rows into batch sizes?
-    //  - is this a CStore config?
-    //  - or does this method take an `opts` argument -> batch_size?
-
-    // TODO: we can probably just nuke all the peer stuff and
-    // directly use the JDBC APIs; a lot unneeded overhead down
-    // in that layer
-
-    onLockExec |conn|
-    {
-      JConnection? jconn
-      try
-      {
-        // map to CCol and verify table schema
-        CCol[] ccols := [,]
-        cols.each |n| {
-          ccols.add(table.cmap[n] ?: throw ArgErr("Field not a column: '${n}'"))
-        }
-
-        // check if we need to generate scoped ids
-        Str? scopeCol
-        if (table.hasScopedId)
-        {
-          // add scoped_id if not explicit
-          scopeCol = table.cols.find |c| { c.scopedBy != null }?.name
-          if (!cols.contains(scopeCol)) cols.add(scopeCol)
-
-          // {
-          //   sn := c.scopedBy
-          //   sv := fields[sn]
-          //   if (sv == null) throw ArgErr("Missing scoped column '${sn}'")
-          //   mv := store.impl.select(this, c.name, [sn:sv]).max |a,b| { a.getInt(c.name) <=> b.getInt(c.name) }
-          //   nv := mv == null ? 1 : mv.getInt(c.name)+1
-          //   fields[c.name] = nv
-          // }
-        }
-
-        // get stmt instance
-        jconn = conn->java
-        jconn.setAutoCommit(false)
-        sql := CUtil.sqlInsert(table, cols)
-        ps  := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
-
-x := 1
-        // batch add
-        vals := List.makeObj(cols.size)
-        rows.each |row|
-        {
-          vals.clear
-          cols.each |c,i|
-          {
-            if (c == scopeCol) ps.setObject(i+1, x++)
-            else ps.setObject(i+1, row[c])
-          }
-          ps.addBatch
-        }
-
-        // execute then collect ids
-        ps.executeBatch
-        jconn.commit
-  // TODO: this is not impl on sqlite; how should this work?
-  // TODO: make this a virtual func -> StoreImpl.getGenKeys
-        ids := List.make(Int#, rows.size)
-        rs  := ps.getGeneratedKeys
-        while (rs.next) { ids.add(rs.getLong(1)) }
-        return ids
-      }
-      finally
-      {
-        // TODO: reset auto-commit; but eventually I think we rework
-        // everything to use auto_commit=false
-        jconn.setAutoCommit(true)
-      }
     }
   }
 
@@ -337,6 +246,132 @@ x := 1
           if (v != null) map[c.name] = sqlToFan(c, v)
         }
         return CRec(map)
+      }
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// CRUD
+//////////////////////////////////////////////////////////////////////////
+
+  ** Create a new record in sql database and return new id.
+  virtual Int create(CTable table, Str:Obj fields)
+  {
+    onLockExec |conn|
+    {
+      cols := fields.keys.join(",") |c| { "\"${c}\"" }
+      vars := fields.keys.join(",") |n| { "@${n}" }
+      res := _execRaw("insert into ${table.name} (${cols}) values (${vars})", fieldsToSql(table, fields))
+      // TODO: for now we require an id column
+      Int id := (res as List).first
+      return id
+    }
+  }
+
+  ** Create a new record in sql database and return new id.
+  virtual Int[] createAll(CTable table, Str[] colnames, [Str:Obj?][] rows)
+  {
+    // TODO: setTransactionIsolation?
+    // TODO: do we auto break up rows into batch sizes?
+    //  - is this a CStore config?
+    //  - or does this method take an `opts` argument -> batch_size?
+
+    onLockExec |conn|
+    {
+      JConnection? jconn
+      try
+      {
+        // TODO: unroll fantom layer and use JDBC directly
+        jconn = conn->java
+
+        // lazy init this only if we need to
+        CCol? scol        // scoped_id col
+        CCol? bycol       // scol.scopedBy col
+        [Int:Int]? srefs  // scoped_by_val : next_id
+
+        // map col names to CCol
+        CCol[] cols := [,]
+        colnames.each |n|
+        {
+          c := table.cmap[n] ?: throw ArgErr("Field not a column: '${n}'")
+          cols.add(c)
+        }
+
+        // check if we need to generate scoped ids
+        if (table.hasScopedId)
+        {
+          // add scoped_id if not explicit
+          scol = table.cols.find |c| { c.scopedBy != null }
+          if (!cols.contains(scol)) cols.add(scol)
+
+          // enable auto-commit for id checks
+          jconn.setAutoCommit(true)
+
+          // find next scoped_by value for each row scope
+          bycol = table.cmap[scol.scopedBy]
+          srefs = Int:Int[:]
+          rows.each |r|
+          {
+            // get reference value and short-circuit if we have
+            // already queried for the next scoped value
+            sv := r[bycol.name] ?: throw ArgErr("Missing scoped_by reference value")
+            if (srefs.containsKey(sv)) return
+
+            // find current max scoped val
+            ssql := "select max(${scol.name}) from ${table.name} where ${bycol.name} = ?"
+            sps  := jconn.prepareStatement(ssql)
+            sps.setObject(1, sv)
+            sps.execute
+            res := sps.getResultSet
+            res.next
+            srefs[sv] = res.getLong(1) + 1
+          }
+        }
+
+        // get stmt instance
+        jconn.setAutoCommit(false)
+        sql := CUtil.sqlInsert(table, cols)
+        ps  := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
+
+        // batch add
+        vals := List.makeObj(cols.size)
+        rows.each |row|
+        {
+          vals.clear
+          cols.each |c,i|
+          {
+            if (c == scol)
+            {
+              // get next scoped_val for row
+              sv := row[bycol.name]
+              id := srefs[sv]
+              ps.setObject(i+1, id)
+              srefs[sv] = id + 1
+            }
+            else
+            {
+              // else pick up from args
+              ps.setObject(i+1, row[c.name])
+            }
+          }
+          ps.addBatch
+        }
+
+        // execute then collect ids
+        ps.executeBatch
+        jconn.commit
+  // TODO: this is not impl on sqlite; how should this work?
+  // TODO: make this a virtual func -> StoreImpl.getGenKeys
+        ids := List.make(Int#, rows.size)
+        rs  := ps.getGeneratedKeys
+        while (rs.next) { ids.add(rs.getLong(1)) }
+        return ids
+      }
+      finally
+      {
+        // TODO: reset auto-commit; but eventually I think we rework
+        // everything to use auto_commit=false
+        jconn?.setAutoCommit(true)
       }
     }
   }
@@ -374,6 +409,10 @@ x := 1
       return null
     }
   }
+
+//////////////////////////////////////////////////////////////////////////
+// Support
+//////////////////////////////////////////////////////////////////////////
 
   // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
   ** Convert fantom valus to sql compat values.

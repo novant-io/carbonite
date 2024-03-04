@@ -17,14 +17,14 @@ internal const class CUtil
   **
   **   insert into xxx (a,b,c) values(?,?,?)
   **
-  static Str sqlInsert(CTable table, Str[] cols)
+  static Str sqlInsert(CTable table, CCol[] cols)
   {
     buf := StrBuf()
     buf.add("insert into ").add(table.name).add(" (")
     cols.each |c,i|
     {
       if (i > 0) buf.addChar(',')
-      buf.add(c)
+      buf.add(c.name)
     }
     buf.add(") values(")
     cols.each |c,i|

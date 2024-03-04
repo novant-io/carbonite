@@ -16,8 +16,14 @@ class CUtilTest : Test
 {
   Void testSql()
   {
+    // NOTE: sqlInsert does not check schemas
     e := Employees()
+    c := [
+     CCol("a", Str#, [:]),
+     CCol("b", Str#, [:]),
+     CCol("c", Str#, [:]),
+    ]
     Method m := Slot.find("carbonite::CUtil.sqlInsert")
-    verifyEq(m.call(e, ["a","b","c"]), "insert into employees (a,b,c) values(?,?,?)")
+    verifyEq(m.call(e, c), "insert into employees (a,b,c) values(?,?,?)")
   }
 }

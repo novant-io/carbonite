@@ -55,5 +55,9 @@ const class CCol
     return !type.isNullable
   }
 
+  override Int compare(Obj that) { name.compare(that) }
+
+  override Int hash() { name.hash }
+
   override Str toStr() { name }
 }
