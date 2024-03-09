@@ -6,6 +6,8 @@
 //   4 Jul 2022  Andy Frank  Creation
 //
 
+using util
+
 *************************************************************************
 ** CRec
 *************************************************************************
@@ -53,7 +55,7 @@ const class CRec
   **
   ** Parse the record value for given field into a 'Str:Str'
   ** map of name/value pairs using the Fantom props file
-  ** format.  If field is not found or isnot a 'Str' type
+  ** format.  If field is not found or is not a 'Str' type
   ** then return an empty map.
   **
   ** See `https://fantom.org/doc/sys/InStream#readProps`
@@ -65,8 +67,16 @@ const class CRec
     return v.in.readProps
   }
 
-  // getf
-  // getJson -> once?
+  **
+  ** Parse the record value for given field as JSON. If field
+  ** is not found or is not a 'Str' type then returns 'null'.
+  **
+  Obj? readJson(Str name)
+  {
+    v := get(name) as Str
+    if (v == null) return null
+    return JsonInStream(v.in).readJson
+  }
 
   ** Trap first checks 'Obj.trap' for a matching slot, or if
   ** not found looks up field value using `get`.

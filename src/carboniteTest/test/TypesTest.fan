@@ -194,7 +194,7 @@ class TypesTest : AbstractStoreTest
     }
   }
 
-  Void testRead()
+  Void testProps()
   {
     eachImpl(tables) |s|
     {
@@ -213,6 +213,26 @@ class TypesTest : AbstractStoreTest
       verifyEq(r.readProps("str"), ["foo_1":"bar_1", "foo_3":"bar_3"])
       verifyEq(r.readProps("int"), Str:Str[:])
       verifyEq(r.readProps("xxx"), Str:Str[:])
+    }
+  }
+
+  Void testJson()
+  {
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->str, null)
+
+      // props
+      t.update(1, [
+        "int": 5,
+        "str": Str<|{ "foo":"bar", "car":5, "zar":false }|>
+      ])
+      r = t.get(1)
+      verifyEq(r.readJson("str"), Str:Obj?["foo":"bar", "car":5, "zar":false])
+      verifyEq(r.readJson("int"), null)
+      verifyEq(r.readJson("xxx"), null)
     }
   }
 }
