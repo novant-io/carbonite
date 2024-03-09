@@ -193,4 +193,26 @@ class TypesTest : AbstractStoreTest
       verifyEq(r.getDateTime("datetime", ny).toStr, "2024-03-04T10:43:00-05:00 New_York")
     }
   }
+
+  Void testRead()
+  {
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->str, null)
+
+      // props
+      t.update(1, [
+        "int": 5,
+        "str": "foo_1=bar_1
+                // foo_2=bar_2
+                foo_3=bar_3"
+      ])
+      r = t.get(1)
+      verifyEq(r.readProps("str"), ["foo_1":"bar_1", "foo_3":"bar_3"])
+      verifyEq(r.readProps("int"), Str:Str[:])
+      verifyEq(r.readProps("xxx"), Str:Str[:])
+    }
+  }
 }

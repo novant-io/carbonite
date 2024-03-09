@@ -50,6 +50,21 @@ const class CRec
     return dt.toTimeZone(tz)
   }
 
+  **
+  ** Parse the record value for given field into a 'Str:Str'
+  ** map of name/value pairs using the Fantom props file
+  ** format.  If field is not found or isnot a 'Str' type
+  ** then return an empty map.
+  **
+  ** See `https://fantom.org/doc/sys/InStream#readProps`
+  **
+  Str:Str readProps(Str name)
+  {
+    v := get(name) as Str
+    if (v == null) v = ""
+    return v.in.readProps
+  }
+
   // getf
   // getJson -> once?
 
