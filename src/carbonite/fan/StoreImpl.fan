@@ -397,9 +397,27 @@ internal abstract const class StoreImpl
   {
     onLockExec |conn|
     {
+      verifyFieldSchema(table, fields)
       assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
       _exec("update ${table.name} set ${assign} where id = ${id}", fieldsToSql(table, fields))
       // return new rec
+      return null
+    }
+  }
+
+  ** Update a list of existing records in sql database.
+  virtual Void updateAll(CTable table, Int[] ids, Str:Obj? fields)
+  {
+    onLockExec |conn|
+    {
+      verifyFieldSchema(table, fields)
+      assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
+      // TODO: make batch size tunable
+      CUtil.batch(ids, 500) |chunkIds|
+      {
+        idarg := chunkIds.join(",")
+        _exec("update ${table.name} set ${assign} where id in (${idarg})", fieldsToSql(table, fields))
+      }
       return null
     }
   }
@@ -444,6 +462,22 @@ internal abstract const class StoreImpl
 //////////////////////////////////////////////////////////////////////////
 // Support
 //////////////////////////////////////////////////////////////////////////
+
+  ** Verify fields are valid colum names and types.
+  private Void verifyFieldSchema(CTable table, Str:Obj? fields)
+  {
+    // verify field cols
+    fields.each |v,k|
+    {
+      // validate field is col
+      c := table.cmap[k]
+      if (c == null) throw ArgErr("Field not a column: '${k}'")
+
+      // check null
+      if (v == null && !c.type.isNullable)
+        throw ArgErr("Column cannot be null '${c.name}'")
+    }
+  }
 
   // TODO FIXIT: this needs to happen in SqlUtil to avoid double mapping
   ** Convert fantom valus to sql compat values.

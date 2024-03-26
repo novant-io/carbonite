@@ -82,22 +82,16 @@ abstract const class CTable
     store.impl.select(this, "*", where)
   }
 
-  ** Update existing record in this table with given field values and
-  ** return the new record instance.
+  ** Update existing record in this table with given field values.
   Void /*CRec*/ update(Int id, Str:Obj? fields)
   {
-    // verify field cols
-    fields.each |v,k|
-    {
-      // validate field is col
-      c := cmap[k]
-      if (c == null) throw ArgErr("Field not a column: '${k}'")
-
-      // check null
-      if (v == null && !c.type.isNullable)
-        throw ArgErr("Column cannot be null '${c.name}'")
-    }
     store.impl.update(this, id, fields)
+  }
+
+  ** Update a list of existing record with given ids with given field values.
+  Void updateAll(Int[] ids, Str:Obj? fields)
+  {
+    store.impl.updateAll(this, ids, fields)
   }
 
   ** Delete an existing record in this given id.
@@ -106,7 +100,7 @@ abstract const class CTable
     store.impl.delete(this, id)
   }
 
-  ** Delete the list of existing records form given ids.
+  ** Delete the list of existing records with given ids.
   Void deleteAll(Int[] ids)
   {
     store.impl.deleteAll(this, ids)

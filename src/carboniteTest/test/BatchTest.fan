@@ -132,6 +132,54 @@ class BatchTest : AbstractStoreTest
   }
 
 //////////////////////////////////////////////////////////////////////////
+// Update All
+//////////////////////////////////////////////////////////////////////////
+
+  Void testUpdateAll()
+  {
+    eachImpl([BatchTestA#]) |ds,impl|
+    {
+      // empty
+      verifyEq(ds.tables.size, 1)
+      verifyEq(ds.table(BatchTestA#).size, 0)
+      verifyEq(ds.table(BatchTestA#).listAll.size, 0)
+
+      // batch size (> 500 to test chunking)
+      bnum := 1875
+
+      // batch create
+      crecs := [,]
+      bnum.times |i| { crecs.add(["org_id":1, "name":"Person ${i}"]) }
+      CTable e := ds.table(BatchTestA#)
+      e.createAll(crecs)
+      verifyEq(e.size, bnum)
+
+      // gen ids list
+      ids := Int[,]
+      bnum.times |i| { ids.add(i+1) }
+
+      // update all recs
+      e.updateAll(ids, ["pos":"foo_bar"])
+      urecs := e.listAll
+      verifyEq(urecs.size, bnum)
+      urecs.each |r| { verifyEq(r->pos, "foo_bar") }
+
+      // update partial
+      e.updateAll(ids[0..350], ["pos":"bar_zar"])
+      urecs = e.listAll.sort |a,b| { a->id <=> b->id }  // psql returns these out of order
+      verifyEq(urecs.size, bnum)
+      urecs.eachRange(0..350)  |r| { verifyEq(r->pos, "bar_zar") }
+      urecs.eachRange(351..-1) |r| { verifyEq(r->pos, "foo_bar") }
+
+      // err: field not a column
+      verifyErr(ArgErr#) { e.updateAll([1,2,3], ["role":"xxx"]) }
+
+      // err: invalid field type
+      verifyErr(ArgErr#) { e.updateAll([1,2,3], ["pos":false]) }
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
 // Delete All
 //////////////////////////////////////////////////////////////////////////
 
