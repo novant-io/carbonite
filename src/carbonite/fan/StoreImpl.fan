@@ -240,6 +240,10 @@ internal abstract const class StoreImpl
   ** Return result from select sql statement.
   virtual CRec[] selectIds(CTable table, Int[] ids)
   {
+    // short-circuit if empty list
+    if (ids.isEmpty) return CRec#.  emptyList
+
+    // query
     idarg := ids.join(",")
     sql   := "select * from ${table.name} where id in (${idarg})"
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type

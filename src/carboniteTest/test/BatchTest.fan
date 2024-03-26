@@ -166,6 +166,9 @@ class BatchTest : AbstractStoreTest
       a := e.listIds(ids)
       verifyEq(a.size, 500)
 
+      // check none
+      verifyEq(e.listIds([,]).size, 0)
+
       // check specific
       b := e.listIds([5,201,387])
       verifyEq(b.size, 3)
