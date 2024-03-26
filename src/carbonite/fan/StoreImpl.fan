@@ -413,6 +413,21 @@ internal abstract const class StoreImpl
     }
   }
 
+  ** Delete an existing record in sql database.
+  virtual Void deleteAll(CTable table, Int[] ids)
+  {
+    onLockExec |conn|
+    {
+      // TODO: make batch size tunable
+      CUtil.batch(ids, 500) |chunkIds|
+      {
+        idarg := chunkIds.join(",")
+        _exec("delete from ${table.name} where id in (${idarg})")
+      }
+      return null
+    }
+  }
+
   ** Delete existing records based on given 'where' clause.
   virtual Void deleteBy(CTable table, Str:Obj where)
   {

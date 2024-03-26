@@ -140,6 +140,12 @@ abstract const class CTable
     store.impl.delete(this, id)
   }
 
+  ** Delete the list of existing records form given ids.
+  Void deleteAll(Int[] ids)
+  {
+    store.impl.deleteAll(this, ids)
+  }
+
   ** Delete all records where all 'where' conditions are equal.
   Void deleteBy(Str:Obj where)
   {

@@ -46,6 +46,11 @@ const class BatchTestB : CTable
 
 class BatchTest : AbstractStoreTest
 {
+
+//////////////////////////////////////////////////////////////////////////
+// Basics
+//////////////////////////////////////////////////////////////////////////
+
   Void testBasics()
   {
     eachImpl([BatchTestA#]) |ds,impl|
@@ -88,6 +93,10 @@ class BatchTest : AbstractStoreTest
     }
   }
 
+//////////////////////////////////////////////////////////////////////////
+// Scoped Ids
+//////////////////////////////////////////////////////////////////////////
+
   Void testScopedIds()
   {
     eachImpl([BatchTestB#]) |ds,impl|
@@ -121,6 +130,41 @@ class BatchTest : AbstractStoreTest
       verifyBatch(e.listAll[3], 4, 3, 1, "Brick Tamland",         "weather")
     }
   }
+
+//////////////////////////////////////////////////////////////////////////
+// Delete All
+//////////////////////////////////////////////////////////////////////////
+
+  Void testDeleteAll()
+  {
+    eachImpl([BatchTestA#]) |ds,impl|
+    {
+      // empty
+      verifyEq(ds.tables.size, 1)
+      verifyEq(ds.table(BatchTestA#).size, 0)
+      verifyEq(ds.table(BatchTestA#).listAll.size, 0)
+
+      // batch size (> 500 to test chunking)
+      bnum := 1875
+
+      // batch create
+      recs := [,]
+      bnum.times |i| { recs.add(["org_id":1, "name":"Person ${i}"]) }
+      CTable e := ds.table(BatchTestA#)
+      e.createAll(recs)
+      verifyEq(e.size, bnum)
+
+      // create ids oursevles since not impl on sqlite
+      ids := Int[,]
+      bnum.times |i| { ids.add(i+1) }
+      e.deleteAll(ids)
+      verifyEq(e.size, 0)
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// Support
+//////////////////////////////////////////////////////////////////////////
 
   private Void verifyBatch(CRec rec, Int id, Int orgId, Int? scopedId, Str name, Str? pos)
   {
