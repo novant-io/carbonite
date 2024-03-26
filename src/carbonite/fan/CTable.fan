@@ -76,6 +76,12 @@ abstract const class CTable
     store.impl.select(this, "*")
   }
 
+  ** List records by given ids.
+  CRec[] listIds(Int[] ids)
+  {
+    store.impl.selectIds(this, ids)
+  }
+
   ** List records in this table where all 'where' conditions are equal.
   CRec[] listBy(Str:Obj where)
   {

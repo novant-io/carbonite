@@ -232,22 +232,34 @@ internal abstract const class StoreImpl
       sql += " where ${cond}"
     }
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
-    return onLockExec |conn|
-    {
-      return _exec(sql, where).map |row|
-      {
-        // TODO FIXIT YOWZERS
-        map := Str:Obj?[:]
-        row.cols.each |rc|
-        {
-          c := table.cols.find |c| { c.name == rc.name }
-          if (c == null) return
-          v := row.get(rc)
-          if (v != null) map[c.name] = sqlToFan(c, v)
-        }
-        return CRec(map)
-      }
+    return onLockExec |conn| {
+      return _exec(sql, where).map |row| { makeRec(table, row) }
     }
+  }
+
+  ** Return result from select sql statement.
+  virtual CRec[] selectIds(CTable table, Int[] ids)
+  {
+    idarg := ids.join(",")
+    sql   := "select * from ${table.name} where id in (${idarg})"
+    // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
+    return onLockExec |conn| {
+      return _exec(sql).map |row| { makeRec(table, row) }
+    }
+  }
+
+  private CRec makeRec(CTable table, Row row)
+  {
+    // TODO FIXIT YOWZERS
+    map := Str:Obj?[:]
+    row.cols.each |rc|
+    {
+      c := table.cols.find |c| { c.name == rc.name }
+      if (c == null) return
+      v := row.get(rc)
+      if (v != null) map[c.name] = sqlToFan(c, v)
+    }
+    return CRec(map)
   }
 
 //////////////////////////////////////////////////////////////////////////

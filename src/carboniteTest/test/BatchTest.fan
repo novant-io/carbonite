@@ -83,6 +83,14 @@ class BatchTest : AbstractStoreTest
       verifyBatch(e.listAll[2], 3, 2, null, "Brian Fantana",         null)
       verifyBatch(e.listAll[3], 4, 3, null, "Brick Tamland",         "weather")
 
+      // select ids
+      recs := e.listIds([1,2,3,4])
+      verifyEq(recs.size, 4)
+      verifyBatch(recs[0], 1, 1, null, "Ron Burgundy",          "lead")
+      verifyBatch(recs[1], 2, 1, null, "Veronica Corningstone", "lead")
+      verifyBatch(recs[2], 3, 2, null, "Brian Fantana",         null)
+      verifyBatch(recs[3], 4, 3, null, "Brick Tamland",         "weather")
+
       // batch delete
       e.deleteBy(["org_id":1])
       verifyEq(e.size, 2)
@@ -128,6 +136,48 @@ class BatchTest : AbstractStoreTest
       verifyBatch(e.listAll[1], 2, 1, 2, "Veronica Corningstone", "lead")
       verifyBatch(e.listAll[2], 3, 2, 1, "Brian Fantana",         null)
       verifyBatch(e.listAll[3], 4, 3, 1, "Brick Tamland",         "weather")
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// List
+//////////////////////////////////////////////////////////////////////////
+
+  Void testListIds()
+  {
+    eachImpl([BatchTestA#]) |ds,impl|
+    {
+      // empty
+      verifyEq(ds.tables.size, 1)
+      verifyEq(ds.table(BatchTestA#).size, 0)
+      verifyEq(ds.table(BatchTestA#).listAll.size, 0)
+
+      crecs := [,]
+      500.times |i| { crecs.add(["org_id":1, "name":"Person ${i+1}"]) }
+      CTable e := ds.table(BatchTestA#)
+      e.createAll(crecs)
+      verifyEq(e.size, 500)
+
+      // gen ids list
+      ids := Int[,]
+      500.times |i| { ids.add(i+1) }
+
+      // check all
+      a := e.listIds(ids)
+      verifyEq(a.size, 500)
+
+      // check specific
+      b := e.listIds([5,201,387])
+      verifyEq(b.size, 3)
+      verifyBatch(b[0],   5, 1, null, "Person 5",   null)
+      verifyBatch(b[1], 201, 1, null, "Person 201", null)
+      verifyBatch(b[2], 387, 1, null, "Person 387", null)
+
+      // check not found
+      c := e.listIds([-1,0,100,499,720])
+      verifyEq(c.size, 2)
+      verifyBatch(c[0], 100, 1, null, "Person 100", null)
+      verifyBatch(c[1], 499, 1, null, "Person 499", null)
     }
   }
 
