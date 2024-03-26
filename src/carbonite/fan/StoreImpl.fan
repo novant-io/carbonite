@@ -429,7 +429,7 @@ internal abstract const class StoreImpl
       verifyFieldSchema(table, fields)
       assign := fields.keys.join(",") |n| { "\"${n}\" = @${n}" }
       // TODO: make batch size tunable
-      CUtil.batch(ids, 500) |chunkIds|
+      CUtil.batch(ids, 1000) |chunkIds|
       {
         idarg := chunkIds.join(",")
         _exec("update ${table.name} set ${assign} where id in (${idarg})", fieldsToSql(table, fields))
@@ -453,7 +453,7 @@ internal abstract const class StoreImpl
     onLockExec |conn|
     {
       // TODO: make batch size tunable
-      CUtil.batch(ids, 500) |chunkIds|
+      CUtil.batch(ids, 1000) |chunkIds|
       {
         idarg := chunkIds.join(",")
         _exec("delete from ${table.name} where id in (${idarg})")
