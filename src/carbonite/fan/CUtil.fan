@@ -51,4 +51,22 @@ internal const class CUtil
     }
     return buf.toStr
   }
+
+  ** Batch the given list into chunks of size 'chunkSize' and
+  ** invoke the callback function for each chunk.
+  static Void batch(Obj[] list, Int chunkSize, |Obj[] chunk| f)
+  {
+    off := 0
+    while (off < list.size)
+    {
+      // get next chunk
+      start := off
+      end   := list.size.min(start+chunkSize)
+      chunk := list[start..<end]
+      f(chunk)
+
+      // advance offset
+      off = end
+    }
+  }
 }

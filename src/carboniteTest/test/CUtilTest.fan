@@ -32,4 +32,39 @@ class CUtilTest : Test
     m = Slot.find("carbonite::CUtil.sqlDelete")
     verifyEq(m.call(e, w), """delete from employees where "foo" = ? and "bar" = ?""")
   }
+
+  Void testBatch()
+  {
+    // uneven
+    a := [1,2,3,4,5,6,7,8,9,10]
+    x := [,]
+    doBatch(a, 3) |c| { x.add(c) }
+    verifyEq(x.size, 4)
+    verifyEq(x[0], [1,2,3])
+    verifyEq(x[1], [4,5,6])
+    verifyEq(x[2], [7,8,9])
+    verifyEq(x[3], [10])
+
+    // even
+    a = [1,2,3,4,5,6,7,8,9]
+    x = [,]
+    doBatch(a, 3) |c| { x.add(c) }
+    verifyEq(x.size, 3)
+    verifyEq(x[0], [1,2,3])
+    verifyEq(x[1], [4,5,6])
+    verifyEq(x[2], [7,8,9])
+
+    // smaller
+    a = [1,2,3]
+    x = [,]
+    doBatch(a, 100) |c| { x.add(c) }
+    verifyEq(x.size, 1)
+    verifyEq(x[0], [1,2,3])
+  }
+
+  private Void doBatch(Obj[] list, Int size, |Obj[] chunk| f)
+  {
+    Method m := Slot.find("carbonite::CUtil.batch")
+    m.call(list, size, f)
+  }
 }
