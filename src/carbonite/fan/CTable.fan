@@ -41,46 +41,12 @@ abstract const class CTable
   Int create(Str:Obj? fields)
   {
     store.impl.create(this, fields)
-
-    // // verify field cols
-    // fields.each |v,k|
-    // {
-    //   c := cmap[k]
-    //   if (c == null) throw ArgErr("Field not a column: '${k}'")
-    // }
-
-    // // generate scoped ids
-    // cols.each |c|
-    // {
-    //   if (c.scopedBy == null) return
-    //   sn := c.scopedBy
-    //   sv := fields[sn]
-    //   if (sv == null) throw ArgErr("Missing scoped column '${sn}'")
-    //   mv := store.impl.select(this, c.name, [sn:sv]).max |a,b| { a.getInt(c.name) <=> b.getInt(c.name) }
-    //   nv := mv == null ? 1 : mv.getInt(c.name)+1
-    //   fields[c.name] = nv
-    // }
-
-    // // check non-nullable cols
-    // cmap.vals.each |c|
-    // {
-    //   v := fields[c.name]
-    //   if (v == null && c.req) throw ArgErr("Missing non-nullable column value for '${c.name}'")
-    // }
-
-    // return store.impl.create(this, fields)
   }
 
   ** Batch create a list of new records in this table with given
   ** list of new field values.  Returns list of new record ids.
   Int[] createAll([Str:Obj?][] rows)
   {
-    // TODO: is it more efficient to impl some of
-    // these checks in the StoreImpl loop?
-    //  - verify cols
-    //  - generate scoped ids
-    //  - check non-nullable?
-
     // find union of all column names
     cols := Str:Str[:]
     rows.each |r| {
