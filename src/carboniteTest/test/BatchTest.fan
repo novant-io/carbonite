@@ -277,6 +277,17 @@ class BatchTest : AbstractStoreTest
       verifyEq(e.get(3)->pos, "p3"); verifyEq(e.get(3)->code, "c3")
       verifyEq(e.get(4)->pos, "p4"); verifyEq(e.get(4)->code, "c4")
 
+      // ignore "extra" fields
+      e.updateBatch(Int:Obj[:] {
+        it.ordered = true
+        it.add(2, ["pos":"_p2"])
+        it.add(3, ["pos":"_p3", "code":"x_c3"])
+        it.add(4, ["pos":"_p4", "code":"x_c4", "not_even_a_col":false])
+      })
+      verifyEq(e.get(2)->pos, "_p2")
+      verifyEq(e.get(3)->pos, "_p3")
+      verifyEq(e.get(4)->pos, "_p4")
+
       // err: field mismatch a column (>= 2 items to force batch)
       verifyErr(ArgErr#) {
         e.updateBatch([
