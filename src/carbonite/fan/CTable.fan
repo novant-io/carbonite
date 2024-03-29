@@ -45,16 +45,16 @@ abstract const class CTable
 
   ** Batch create a list of new records in this table with given
   ** list of new field values.  Returns list of new record ids.
-  Int[] createAll([Str:Obj?][] rows)
+  Int[] createAll([Str:Obj?][] batch)
   {
     // find union of all column names
     cols := Str:Str[:]
-    rows.each |r| {
+    batch.each |r| {
       r.each |v,k| { cols[k] = k }
     }
 
     // batch create
-    return store.impl.createAll(this, cols.keys, rows)
+    return store.impl.createAll(this, cols.keys, batch)
   }
 
   ** Get record by id.
@@ -98,6 +98,36 @@ abstract const class CTable
   Void updateAll(Int[] ids, Str:Obj? fields)
   {
     store.impl.updateAll(this, ids, fields)
+  }
+
+  ** Update a list of existing records where 'batch' is map of existing
+  ** record id to fields to update.  This method differs from `updateAll`
+  ** in that each row may contain a different field value to update. All
+  ** entries are required to have the set of field names to update.
+  Void updateBatch(Int:[Str:Obj?] batch)
+  {
+    // short-circuit if nothing todo
+    if (batch.isEmpty) return
+
+    // optimize if a single op
+    if (batch.size == 1)
+    {
+      id := batch.keys.first
+      return update(id, batch[id])
+    }
+
+    // require all keys to match and contain a nullable value
+    // to avoid inadvertently deleting if field is "blank"
+    cols := Str:Str[:]
+    batch.vals.first.each |v,k| { cols.add(k, k) }
+    batch.vals.each |f| {
+      cols.each |c| {
+        if (!f.containsKey(c))
+          throw ArgErr("Missing nullable field value for '${c}'")
+      }
+    }
+
+    store.impl.updateBatch(this, cols.keys, batch)
   }
 
   ** Delete an existing record in this given id.

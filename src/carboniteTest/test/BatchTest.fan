@@ -20,6 +20,7 @@ const class BatchTestA : CTable
     CCol("org_id", Int#,  [:]),
     CCol("name",   Str#,  [:]),
     CCol("pos",    Str?#, [:]),
+    CCol("code",   Str?#, [:]),
   ]
 }
 
@@ -229,6 +230,76 @@ class BatchTest : AbstractStoreTest
 
       // err: invalid field type
       verifyErr(ArgErr#) { e.updateAll([1,2,3], ["pos":false]) }
+    }
+  }
+
+//////////////////////////////////////////////////////////////////////////
+// Update Batch
+//////////////////////////////////////////////////////////////////////////
+
+  Void testUpdateBatch()
+  {
+    eachImpl([BatchTestA#]) |ds,impl|
+    {
+      // empty
+      verifyEq(ds.tables.size, 1)
+      verifyEq(ds.table(BatchTestA#).size, 0)
+      verifyEq(ds.table(BatchTestA#).listAll.size, 0)
+
+      // batch size (> 500 to test chunking)
+      bnum := 1875
+
+      // batch create
+      crecs := [,]
+      bnum.times |i| { crecs.add(["org_id":1, "name":"Person ${i}"]) }
+      CTable e := ds.table(BatchTestA#)
+      e.createAll(crecs)
+      verifyEq(e.size, bnum)
+
+      // gen ids list
+      ids := Int[,]
+      bnum.times |i| { ids.add(i+1) }
+
+      // no-op
+      e.updateBatch([:])
+
+      // single update
+      e.updateBatch([1:["pos":"p1", "code":"c1"]])
+      verifyEq(e.get(1)->pos,  "p1")
+      verifyEq(e.get(1)->code, "c1")
+
+      e.updateBatch([
+        2: ["pos":"p2", "code":"c2"],
+        3: ["pos":"p3", "code":"c3"],
+        4: ["pos":"p4", "code":"c4"],
+      ])
+      verifyEq(e.get(2)->pos, "p2"); verifyEq(e.get(2)->code, "c2")
+      verifyEq(e.get(3)->pos, "p3"); verifyEq(e.get(3)->code, "c3")
+      verifyEq(e.get(4)->pos, "p4"); verifyEq(e.get(4)->code, "c4")
+
+      // err: field mismatch a column (>= 2 items to force batch)
+      verifyErr(ArgErr#) {
+        e.updateBatch([
+          1: ["pos":  "x"],
+          2: ["code": "x"],
+        ])
+      }
+
+      // err: field not a column (>= 2 items to force batch)
+      verifyErr(ArgErr#) {
+        e.updateBatch([
+          1: ["role":"xxx"],
+          2: ["role":"xxx"],
+        ])
+      }
+
+      // err: invalid field type (>= 2 items to force batch)
+      verifyErr(ArgErr#) {
+        e.updateBatch([
+          1: ["pos":false],
+          2: ["pos":false],
+        ])
+      }
     }
   }
 

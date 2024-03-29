@@ -27,6 +27,10 @@ class CUtilTest : Test
     Method m := Slot.find("carbonite::CUtil.sqlInsert")
     verifyEq(m.call(e, c), """insert into employees ("a","b","c") values(?,?,?)""")
 
+    // update
+    m = Slot.find("carbonite::CUtil.sqlUpdate")
+    verifyEq(m.call(e, c), """update employees set "a"=?,"b"=?,"c"=? where id = ?""")
+
     // delete
     w := ["foo", "bar"]
     m = Slot.find("carbonite::CUtil.sqlDelete")

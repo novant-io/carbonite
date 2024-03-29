@@ -37,6 +37,24 @@ internal const class CUtil
   }
 
   **
+  ** Create insert sql string:
+  **
+  **   update xxx set (a=?,b=?,c=?) where id = x
+  **
+  static Str sqlUpdate(CTable table, CCol[] cols)
+  {
+    buf := StrBuf()
+    buf.add("update ").add(table.name).add(" set ")
+    cols.each |c,i|
+    {
+      if (i > 0) buf.addChar(',')
+      buf.addChar('"').add(c.name).add("\"=?")
+    }
+    buf.add(" where id = ?")
+    return buf.toStr
+  }
+
+  **
   ** Create delete sql string:
   **
   **   delete from xxx where a = ? and b = ?

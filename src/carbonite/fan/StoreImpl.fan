@@ -350,10 +350,8 @@ internal abstract const class StoreImpl
         ps  := jconn.prepareStatement(sql.toStr, JStatement.RETURN_GENERATED_KEYS)
 
         // batch add
-        vals := List.makeObj(cols.size)
         rows.each |row|
         {
-          vals.clear
           cols.each |c,i|
           {
             if (c == scol)
@@ -435,6 +433,75 @@ internal abstract const class StoreImpl
         _exec("update ${table.name} set ${assign} where id in (${idarg})", fieldsToSql(table, fields))
       }
       return null
+    }
+  }
+
+  ** Batch of list of updates.
+  virtual Void updateBatch(CTable table, Str[] colnames, Int:[Str:Obj?] batch)
+  {
+    onLockExec |conn|
+    {
+      JConnection? jconn
+      try
+      {
+        // TODO: unroll fantom layer and use JDBC directly
+        jconn = conn->java
+
+        // map col names to CCol
+        CCol[] cols := [,]
+        batch.vals.first.keys.each |n|
+        {
+          c := table.cmap[n] ?: throw ArgErr("Field not a column: '${n}'")
+          cols.add(c)
+        }
+
+        // TODO: make batch size tunable
+        CUtil.batch(batch.keys, 1000) |chunkIds|
+        {
+          // get stmt instance
+          jconn.setAutoCommit(false)
+          sql := CUtil.sqlUpdate(table, cols)
+          ps  := jconn.prepareStatement(sql.toStr)
+
+          chunkIds.each |id|
+          {
+            // batch update
+            row := batch[id]
+            cols.each |c,i|
+            {
+              v := row[c.name]
+              if (v == null && c.req) throw ArgErr("Missing non-nullable column value for '${c.name}'")
+              // TODO FIXIT!
+              if (v != null)
+              {
+                v = fanToSql(c, v)
+                v = conn->fanToSqlObj(v, jconn)
+              }
+              ps.setObject(i+1, v)
+            }
+            ps.setObject(cols.size+1, id)
+            ps.addBatch
+          }
+
+          // execute
+          ps.executeBatch
+          jconn.commit
+        }
+        return null
+      }
+      catch (Err err)
+      {
+        // always wrap with ArgErr or SqlErr
+        if (err is ArgErr) throw err
+        if (err is SqlErr) throw err
+        throw SqlErr(err.msg, err)
+      }
+      finally
+      {
+        // TODO: reset auto-commit; but eventually I think we rework
+        // everything to use auto_commit=false
+        jconn?.setAutoCommit(true)
+      }
     }
   }
 
