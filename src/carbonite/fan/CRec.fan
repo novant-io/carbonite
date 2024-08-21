@@ -90,6 +90,9 @@ const class CRec
     return get(name)
   }
 
+  ** Create a writable duplicate copy of this record as a 'Str:Obj? map.
+  Str:Obj? dup() { map.dup }
+
   override Str toStr()
   {
     buf := StrBuf()
