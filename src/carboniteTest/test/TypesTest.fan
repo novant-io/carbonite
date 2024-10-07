@@ -21,6 +21,7 @@ const class Types : CTable
     CCol("bool",     Bool?#,     [:]),
     CCol("int",      Int?#,      [:]),
     CCol("int_list", Int[]?#,    [:]),
+    CCol("float",    Float?#,    [:]),
     CCol("date",     Date?#,     [:]),
     CCol("datetime", DateTime?#, [:]),
   ]
@@ -108,10 +109,10 @@ class TypesTest : AbstractStoreTest
       verifyEq(r.getInt("int"), 25)
 
       // create
-      t.create(["id":2, "bool":true])
+      t.create(["id":2, "int":26])
       r = t.get(2)
-      verifyEq(r->bool, true)
-      verifyEq(r.getBool("bool"), true)
+      verifyEq(r->int, 26)
+      verifyEq(r.getInt("int"), 26)
     }
   }
 
@@ -138,6 +139,27 @@ class TypesTest : AbstractStoreTest
       r = t.get(2)
       verifyEq(r->int_list, [1,2,3])
       verifyEq(r.getIntList("int_list"), [1,2,3])
+    }
+  }
+
+  Void testFloat()
+  {
+    eachImpl(tables) |s|
+    {
+      t := s.table(Types#)
+      r := t.get(1)
+      verifyEq(r->float, null)
+      t.update(1, ["float":1.37f])
+
+      r = t.get(1)
+      verifyEq(r->float, 1.37f)
+      verifyEq(r.getFloat("float"), 1.37f)
+
+      // create
+      t.create(["id":2, "float":2.9f])
+      r = t.get(2)
+      verifyEq(r->float, 2.9f)
+      verifyEq(r.getFloat("float"), 2.9f)
     }
   }
 

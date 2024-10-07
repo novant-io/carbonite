@@ -42,6 +42,7 @@ internal const class SqliteStoreImpl : StoreImpl
       case Bool#:     sql.join("integer", " ")
       case Int#:      sql.join("integer", " ")
       case Int[]#:    sql.join("text",    " ")
+      case Float#:    sql.join("real",    " ")
       case Date#:     sql.join("integer", " ")
       case DateTime#: sql.join("integer", " ")
       default:        throw ArgErr("Unsupported col type '${col.type}'")
@@ -136,9 +137,10 @@ internal const class SqliteStoreImpl : StoreImpl
 
     switch (col.type.toNonNullable)
     {
-      case Str#:  return fan
-      case Int#:  return fan
-      case Bool#: return fan == true ? 1 : 0
+      case Str#:   return fan
+      case Int#:   return fan
+      case Float#: return fan
+      case Bool#:  return fan == true ? 1 : 0
 
       case Int[]#:
         Int[] v := fan

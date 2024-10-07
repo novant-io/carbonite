@@ -33,6 +33,10 @@ const class CRec
   ** null if not found or value is not a Int[] type.
   Int[]? getIntList(Str name) { get(name) as Int[] }
 
+  ** Get the record value for given field as 'Float', or
+  ** null if not found or value is not a Int type.
+  Float? getFloat(Str name) { get(name) as Float }
+
   ** Get the record value for given field as 'Str', or
   ** null if not found or value is not a 'Str' type.
   Str? getStr(Str name) { get(name) as Str }

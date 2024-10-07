@@ -115,6 +115,7 @@ internal const class PostgresStoreImpl : StoreImpl
         case Bool#:     sql.join("boolean",  " ")
         case Int#:      sql.join("bigint",   " ")
         case Int[]#:    sql.join("bigint[]", " ")
+        case Float#:    sql.join("double precision", " ")
         case Date#:     sql.join("date",     " ")
         case DateTime#: sql.join("timestamp without time zone", " ")
         default:        throw ArgErr("Unsupported col type '${col.type}'")
@@ -211,6 +212,7 @@ internal const class PostgresStoreImpl : StoreImpl
       case Bool#:  return fan
       case Int#:   return fan
       case Int[]#: return fan
+      case Float#: return fan
       case Date#:  return fan
       case DateTime#:
         // TODO: move this into SqlUtil to avoid conversion here
