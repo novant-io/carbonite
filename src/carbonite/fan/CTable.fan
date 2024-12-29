@@ -88,6 +88,14 @@ abstract const class CTable
     store.impl.select(this, "*", where)
   }
 
+  ** List records joined between this table and given 'join' table where
+  ** all join 'on' conditions are equal.
+  CRec[] listJoin(Obj join, Str joinCol, [Str:Obj]? where := null)
+  {
+    joinTable := store.table(join)
+    return store.impl.selectJoin(this, joinTable, joinCol, where)
+  }
+
   ** Update existing record in this table with given field values.
   Void /*CRec*/ update(Int id, Str:Obj? fields)
   {

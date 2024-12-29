@@ -252,6 +252,19 @@ internal abstract const class StoreImpl
     }
   }
 
+  ** Return result from select join sql statement.
+  virtual CRec[] selectJoin(CTable table, CTable join, Str joinCol, [Str:Obj]? where := null)
+  {
+    cond := StrBuf()
+    cond.add("${table.name}.id = ${join.name}.${joinCol}")
+    where?.each |v,n| { cond.join("${n} = @${n}", " and ") }
+    sql := "select * from ${table.name} join ${join.name} on (${cond})"
+    // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
+    return onLockExec |conn| {
+      return _exec(sql, where).map |row| { makeJoinRec(table, join, row) }
+    }
+  }
+
   private CRec makeRec(CTable table, Row row)
   {
     // TODO FIXIT YOWZERS
@@ -262,6 +275,22 @@ internal abstract const class StoreImpl
       if (c == null) return
       v := row.get(rc)
       if (v != null) map[c.name] = sqlToFan(c, v)
+    }
+    return CRec(map)
+  }
+
+  private CRec makeJoinRec(CTable a, CTable b, Row row)
+  {
+    // TODO FIXIT YOWZERS
+    map := Str:Obj?[:]
+    row.cols.each |rc|
+    {
+      // TODO: this will not work if we have dup names in both tables
+      cc := a.cols.find |c| { c.name == rc.name }
+      if (cc == null) cc = b.cols.find |c| { c.name == rc.name }
+      if (cc == null) return
+      v := row.get(rc)
+      if (v != null) map[cc.name] = sqlToFan(cc, v)
     }
     return CRec(map)
   }
