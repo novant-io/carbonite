@@ -91,6 +91,19 @@ class JoinTest : AbstractStoreTest
       verifyRec(j[0], ["id":1, "name":"ACME", "org_id":1, "code":"A52", "city":"Holmdel"])
       verifyRec(j[1], ["id":2, "name":"GNB",  "org_id":2, "code":"B10", "city":"New York"])
       verifyRec(j[2], ["id":3, "name":"KVWN", "org_id":3, "code":"T37", "city":"San Diego"])
+
+      // org_users join
+      // ACME
+      j = users.listJoin(OrgUsers#, "user_id", ["org_id":1])
+      verifyEq(j.size, 0)
+      // GNB
+      j = users.listJoin(OrgUsers#, "user_id", ["org_id":2])
+      verifyEq(j.size, 1)
+      verifyRec(j[0], ["id":21, "name":"Barney Stinson", "org_id":2, "user_id":21, "role":"manager"])
+      // KVWN
+      j = users.listJoin(OrgUsers#, "user_id", ["org_id":3])
+      verifyRec(j[0], ["id":20, "name":"Ron Burgundy",  "org_id":3, "user_id":20, "role":"anchor"])
+      verifyRec(j[1], ["id":23, "name":"Brian Fantana", "org_id":3, "user_id":23, "role":"sports"])
     }
   }
 }
