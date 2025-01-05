@@ -285,12 +285,18 @@ internal abstract const class StoreImpl
     map := Str:Obj?[:]
     row.cols.each |rc|
     {
-      // TODO: this will not work if we have dup names in both tables
+      // TODO FIXIT: for now drop any dup cols from table b; but
+      // we prob want to rework this to user 'b.name_' prefix
       cc := a.cols.find |c| { c.name == rc.name }
       if (cc == null) cc = b.cols.find |c| { c.name == rc.name }
       if (cc == null) return
       v := row.get(rc)
-      if (v != null) map[cc.name] = sqlToFan(cc, v)
+      if (v != null)
+      {
+        // skip if already mapped
+        if (map.containsKey(cc.name)) return
+        map[cc.name] = sqlToFan(cc, v)
+      }
     }
     return CRec(map)
   }
