@@ -255,10 +255,8 @@ internal abstract const class StoreImpl
   ** Return result from select join sql statement.
   virtual CRec[] selectJoin(CTable table, CTable join, Str joinCol, [Str:Obj]? where := null)
   {
-    cond := StrBuf()
-    cond.add("${table.name}.id = ${join.name}.${joinCol}")
-    where?.each |v,n| { cond.join("${n} = @${n}", " and ") }
-    sql := "select * from ${table.name} join ${join.name} on (${cond})"
+    cond := compileCond("${table.name}.id = ${join.name}.${joinCol}", where)
+    sql  := "select * from ${table.name} join ${join.name} on (${cond})"
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
     return onLockExec |conn| {
       return _exec(sql, where).map |row| { makeJoinRec(table, join, row) }
@@ -608,5 +606,38 @@ internal abstract const class StoreImpl
       c := table.cols.find |c| { c.name == n }
       return fanToSql(c, f)
     }
+  }
+
+  ** Compile condition clause to given StrBuf.
+  private Str compileCond(Str prefix, [Str:Obj]? where)
+  {
+    // short-circuit if no conds
+    if (where == null) return prefix
+
+    // else compile onto prefix
+    cond := StrBuf()
+    cond.add(prefix)
+    where?.each |v,n|
+    {
+      if (v is List)
+      {
+        // NOTE: could not get this working piped thru JDBC setObject
+        // workflow; and not sure even supported for sqlite JDBC; so
+        // for now just hardcode
+
+        // only Int[] supported
+        List list := v
+        if (!list.all |x| { x is Int })
+          throw ArgErr("Only Int[] type supported for '${n}'")
+
+        vs := list.join(",")
+        cond.join("${n} in ($vs)", " and ")
+      }
+      else
+      {
+        cond.join("${n} = @${n}", " and ")
+      }
+    }
+    return cond.toStr
   }
 }

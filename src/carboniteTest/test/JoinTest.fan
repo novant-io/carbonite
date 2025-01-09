@@ -104,6 +104,15 @@ class JoinTest : AbstractStoreTest
       j = users.listJoin(OrgUsers#, "user_id", ["org_id":3])
       verifyRec(j[0], ["id":20, "name":"Ron Burgundy",  "org_id":3, "user_id":20, "role":"anchor"])
       verifyRec(j[1], ["id":23, "name":"Brian Fantana", "org_id":3, "user_id":23, "role":"sports"])
+
+      // join with id_list (GNB + KVWN)
+      j = users.listJoin(OrgUsers#, "user_id", ["org_id":[2,3]])
+      verifyEq(j.size, 3)
+      // sort by id since sqlite/postgres have different orders
+      j.sort |a,b| { a->id <=> b->id }
+      verifyRec(j[0], ["id":20, "name":"Ron Burgundy",   "org_id":3, "user_id":20, "role":"anchor"])
+      verifyRec(j[1], ["id":21, "name":"Barney Stinson", "org_id":2, "user_id":21, "role":"manager"])
+      verifyRec(j[2], ["id":23, "name":"Brian Fantana",  "org_id":3, "user_id":23, "role":"sports"])
     }
   }
 }
