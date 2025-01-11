@@ -92,6 +92,9 @@ class BasicTest : AbstractStoreTest
       verifyEq(e.getBy(["pos":"lead"])->name,         "Ron Burgundy")
       verifyEq(e.getBy(["pos":"lead", "id":2])->name, "Veronica Corningstone")
 
+      // getBy (lower)
+      verifyEq(e._getBy(["lower(name)":"roN burGUNDY"])->name, "Ron Burgundy")
+
       // list
       verifyEq(e.listAll.size, 4)
       verifyEq(e.listBy(["pos":"lead"]).size, 2)

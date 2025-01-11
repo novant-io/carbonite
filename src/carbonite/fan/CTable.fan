@@ -70,6 +70,14 @@ abstract const class CTable
     store.impl.select(this, "*", where).first
   }
 
+  // TODO: everything will switch over to this new backend; but
+  // for now to be safe make it an op-tin
+  ** Get first record where all 'where' conditions are met.
+  CRec? _getBy(Str:Obj where)
+  {
+    store.impl._select(this, "*", where).first
+  }
+
   ** List records in this table.
   CRec[] listAll()
   {

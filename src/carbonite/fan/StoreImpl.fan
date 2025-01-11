@@ -222,6 +222,16 @@ internal abstract const class StoreImpl
   }
 
   ** Return result from select sql statement.
+  virtual CRec[] _select(CTable table, Str cols, [Str:Obj]? where := null)
+  {
+    sql := SqlExpr.select(table.name, cols, where)
+    // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
+    return onLockExec |conn| {
+      return _exec(sql.expr, sql.params).map |row| { makeRec(table, row) }
+    }
+  }
+
+  ** Return result from select sql statement.
   virtual CRec[] select(CTable table, Str cols, [Str:Obj]? where := null)
   {
     sql := "select * from ${table.name}"
