@@ -66,7 +66,7 @@ class JoinTest : AbstractStoreTest
       orgs.create(["id":2, "name":"GNB"])
       orgs.create(["id":3, "name":"KVWN"])
 
-      // init orgs
+      // init org_meta
       meta := ds.table(OrgMeta#)
       meta.create(["org_id":1, "code":"A52", "city":"Holmdel"])
       meta.create(["org_id":2, "code":"B10", "city":"New York"])
@@ -86,7 +86,7 @@ class JoinTest : AbstractStoreTest
       join.create(["org_id":3, "user_id":23, "role":"sports"])
 
       // org join
-      j := orgs.listJoin(OrgMeta#, "org_id")
+      j := orgs._listJoin(OrgMeta#, "org_id")
       verifyEq(j.size, 3)
       verifyRec(j[0], ["id":1, "name":"ACME", "org_id":1, "code":"A52", "city":"Holmdel"])
       verifyRec(j[1], ["id":2, "name":"GNB",  "org_id":2, "code":"B10", "city":"New York"])
@@ -94,19 +94,19 @@ class JoinTest : AbstractStoreTest
 
       // org_users join
       // ACME
-      j = users.listJoin(OrgUsers#, "user_id", ["org_id":1])
+      j = users._listJoin(OrgUsers#, "user_id", ["org_id":1])
       verifyEq(j.size, 0)
       // GNB
-      j = users.listJoin(OrgUsers#, "user_id", ["org_id":2])
+      j = users._listJoin(OrgUsers#, "user_id", ["org_id":2])
       verifyEq(j.size, 1)
       verifyRec(j[0], ["id":21, "name":"Barney Stinson", "org_id":2, "user_id":21, "role":"manager"])
       // KVWN
-      j = users.listJoin(OrgUsers#, "user_id", ["org_id":3])
+      j = users._listJoin(OrgUsers#, "user_id", ["org_id":3])
       verifyRec(j[0], ["id":20, "name":"Ron Burgundy",  "org_id":3, "user_id":20, "role":"anchor"])
       verifyRec(j[1], ["id":23, "name":"Brian Fantana", "org_id":3, "user_id":23, "role":"sports"])
 
       // join with id_list (GNB + KVWN)
-      j = users.listJoin(OrgUsers#, "user_id", ["org_id":[2,3]])
+      j = users._listJoin(OrgUsers#, "user_id", ["org_id":[2,3]])
       verifyEq(j.size, 3)
       // sort by id since sqlite/postgres have different orders
       j.sort |a,b| { a->id <=> b->id }

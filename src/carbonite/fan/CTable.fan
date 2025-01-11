@@ -70,14 +70,6 @@ abstract const class CTable
     store.impl.select(this, "*", where).first
   }
 
-  // TODO: everything will switch over to this new backend; but
-  // for now to be safe make it an op-tin
-  ** Get first record where all 'where' conditions are met.
-  CRec? _getBy(Str:Obj where)
-  {
-    store.impl._select(this, "*", where).first
-  }
-
   ** List records in this table.
   CRec[] listAll()
   {
@@ -96,13 +88,50 @@ abstract const class CTable
     store.impl.select(this, "*", where)
   }
 
+////// TODO
+    // everything will switch over to this new backend; but
+    // for now to be safe make it an op-tin
+
+  ** Get record by id.
+  CRec? _get(Int id)
+  {
+    // TODO: check if cols.hasid ?
+    store.impl._select(this, "*", ["id":id]).first
+  }
+
+  ** Get first record where all 'where' conditions are met.
+  CRec? _getBy(Str:Obj where)
+  {
+    store.impl._select(this, "*", where).first
+  }
+
+  ** List records in this table.
+  CRec[] _listAll()
+  {
+    store.impl._select(this, "*")
+  }
+
+  ** List records by given ids.
+  CRec[] _listIds(Int[] ids)
+  {
+    store.impl._select(this, "*", ["id":ids])
+  }
+
+  ** List records in this table where all 'where' conditions are equal.
+  CRec[] _listBy(Str:Obj where)
+  {
+    store.impl._select(this, "*", where)
+  }
+
   ** List records joined between this table and given 'join' table where
   ** all join 'on' conditions are equal.
-  CRec[] listJoin(Obj join, Str joinCol, [Str:Obj]? where := null)
+  CRec[] _listJoin(Obj join, Str joinCol, [Str:Obj]? where := null)
   {
     joinTable := store.table(join)
-    return store.impl.selectJoin(this, joinTable, joinCol, where)
+    return store.impl._selectJoin(this, "*", joinTable, joinCol, where)
   }
+
+/////
 
   ** Update existing record in this table with given field values.
   Void /*CRec*/ update(Int id, Str:Obj? fields)

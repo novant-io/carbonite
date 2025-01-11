@@ -12,10 +12,19 @@
 
 internal class SqlExpr
 {
+  ** Create a new select query.
   static new select(Str table, Str cols, [Str:Obj]? where := null)
   {
     base := "select ${cols} from ${table}"
-    return SqlExpr(base, where)
+    return SqlExpr(base, 0, where)
+  }
+
+  ** Create a new select query joining given tables.
+  static new selectJoin(Str table, Str cols, Str joinTable, Str joinCol, [Str:Obj]? where := null)
+  {
+    base := "select ${cols} from ${table} join ${joinTable} on (" +
+            "${table}.id = ${joinTable}.${joinCol}"
+    return SqlExpr(base, 1, where)
   }
 
   ** Sql expression to execute.
@@ -25,22 +34,25 @@ internal class SqlExpr
   const [Str:Obj]? params := null
 
   ** Private ctor
-  private new make(Str base, [Str:Obj]? where)
+  private new make(Str base, Int cond, [Str:Obj]? where)
   {
     // short-circuit if no where clause
     if (where == null)
     {
-      this.expr = base
+      this.expr = cond == 0 ? base : "${base})"
       return
     }
 
     // base
     buf := StrBuf()
     buf.add(base)
-    buf.add(" where ")
+
+    // cond join
+    ix := 0
+    if (cond == 0) buf.add(" where ")
+    if (cond == 1) ix++
 
     // where
-    ix := 0
     params := Str:Obj[:]
     where.each |v,n|
     {
@@ -79,6 +91,9 @@ internal class SqlExpr
       buf.add(n).add(" = @").add(n)
       params[n] = v
     }
+
+    // on (...)
+    if (cond == 1) buf.add(")")
 
     // set fields
     this.expr = buf.toStr
