@@ -17,7 +17,7 @@ class Build : build::BuildPod
       "repo.tags":    "database",
     ]
     depends  = ["sys 1.0", "util 1.0", "concurrent 1.0"]
-    srcDirs  = [`fan/`, `fan/impl/`, `fan/sql/`]
+    srcDirs  = [`fan/`, `fan/impl/`, `fan/sql/`, `test/`]
     javaDirs = [`java/`]
     // resDirs = [`doc/`]
     docApi = true
