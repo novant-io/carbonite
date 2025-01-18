@@ -64,8 +64,10 @@ internal class SqlExpr
       // low risk inline directly here and skip parameterizing
       if (v is List)
       {
-        buf.add("${n} in (")
         List list := v
+        // omit this cond if the list is empty
+        if (list.isEmpty) { ix--; return }
+        buf.add("${n} in (")
         list.each |x,i|
         {
           // only Int[] list suppported
@@ -94,6 +96,13 @@ internal class SqlExpr
 
     // on (...)
     if (cond == 1) buf.add(")")
+
+    // short-circuit if no params actually added
+    if (ix == 0)
+    {
+      this.expr = base
+      return
+    }
 
     // set fields
     this.expr = buf.toStr

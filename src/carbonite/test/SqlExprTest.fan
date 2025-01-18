@@ -49,6 +49,16 @@ internal class SqlExprTest : Test
     s = SqlExpr.select("users", "*", ["id":[1,2,3]])
     verifyEq(s.expr, "select * from users where id in (1,2,3)")
     verifyEq(s.params, Str:Obj[:])
+
+    // name in (empty)
+    s = SqlExpr.select("users", "*", ["id":[,]])
+    verifyEq(s.expr, "select * from users")
+    verifyEq(s.params, null)
+
+    // name in (empty) and enabled
+    s = SqlExpr.select("users", "*", ["enabled":true, "id":[,]])
+    verifyEq(s.expr, "select * from users where enabled = @enabled")
+    verifyEq(s.params, Str:Obj["enabled":true])
   }
 
 //////////////////////////////////////////////////////////////////////////
