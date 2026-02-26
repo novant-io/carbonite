@@ -79,19 +79,8 @@ internal class SqlExpr
         return
       }
 
-      // lower(name) = @name
-      if (n.startsWith("lower("))
-      {
-        col := n[6..-2]
-        key := "${col}_lower"
-        buf.add("lower(").add(col).add(") = @").add(key)
-        params[key] = v.toStr.lower
-        return
-      }
-
-      // name = @name
-      buf.add(n).add(" = @").add(n)
-      params[n] = v
+      // append parameterized condition
+      appendCond(buf, params, n, v)
     }
 
     // on (...)
@@ -108,4 +97,41 @@ internal class SqlExpr
     this.expr = buf.toStr
     this.params = params
   }
+
+  ** Parse where key and append condition to buf with params.
+  private Void appendCond(StrBuf buf, Str:Obj params, Str key, Obj val)
+  {
+    // make sure each param gets a unique name
+    // to avoid any condition collisions
+    pname := "p${params.size}"
+
+    // lower(xxx)
+    if (key.startsWith("lower("))
+    {
+      close := key.index(")")
+      col   := key[6..<close]
+      rest  := key[close+1..-1].trim
+      op    := rest.isEmpty ? "=" : rest
+      if (op != "=" && !ops.contains(op)) throw ArgErr("Invalid op: $op")
+      buf.add("lower(${col}) ${op} @${pname}")
+      params[pname] = val.toStr.lower
+      return
+    }
+
+    // check for key >= val
+    op := ops.find |x| { key.endsWith(" ${x}") }
+    if (op != null)
+    {
+      col := key[0..<(key.size - op.size - 1)].trim
+      buf.add(col).addChar(' ').add(op).add(" @").add(pname)
+      params[pname] = val
+      return
+    }
+
+    // simple equality
+    buf.add(key).add(" = @").add(pname)
+    params[pname] = val
+  }
+
+  private static const Str[] ops := ["!=", ">=", "<=", ">", "<"]
 }
