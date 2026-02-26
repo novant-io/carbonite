@@ -32,18 +32,18 @@ internal class SqlExprTest : Test
   {
     // name = @name
     s := SqlExpr.select("users", "*", ["id":5])
-    verifyEq(s.expr, "select * from users where id = @id")
-    verifyEq(s.params, Str:Obj["id":5])
+    verifyEq(s.expr, "select * from users where id = @p0")
+    verifyEq(s.params, Str:Obj["p0":5])
 
     // name = @name (2 params)
     s = SqlExpr.select("users", "*", ["enabled":true, "email":"bob@example.com"])
-    verifyEq(s.expr, "select * from users where enabled = @enabled and email = @email")
-    verifyEq(s.params, Str:Obj["enabled":true, "email":"bob@example.com"])
+    verifyEq(s.expr, "select * from users where enabled = @p0 and email = @p1")
+    verifyEq(s.params, Str:Obj["p0":true, "p1":"bob@example.com"])
 
     // lower(name) = name
     s = SqlExpr.select("users", "*", ["lower(email)":"Bob@Example.com"])
-    verifyEq(s.expr, "select * from users where lower(email) = @email_lower")
-    verifyEq(s.params, Str:Obj["email_lower":"bob@example.com"])
+    verifyEq(s.expr, "select * from users where lower(email) = @p0")
+    verifyEq(s.params, Str:Obj["p0":"bob@example.com"])
 
     // name in (1,2,3)
     s = SqlExpr.select("users", "*", ["id":[1,2,3]])
@@ -57,8 +57,8 @@ internal class SqlExprTest : Test
 
     // name in (empty) and enabled
     s = SqlExpr.select("users", "*", ["enabled":true, "id":[,]])
-    verifyEq(s.expr, "select * from users where enabled = @enabled")
-    verifyEq(s.params, Str:Obj["enabled":true])
+    verifyEq(s.expr, "select * from users where enabled = @p0")
+    verifyEq(s.params, Str:Obj["p0":true])
   }
 
 //////////////////////////////////////////////////////////////////////////
@@ -80,18 +80,18 @@ internal class SqlExprTest : Test
   {
     // name = @name
     s := SqlExpr.selectJoin("users", "*", "orgs", "user_id", ["id":5])
-    verifyEq(s.expr, "select * from users join orgs on (users.id = orgs.user_id and id = @id)")
-    verifyEq(s.params, Str:Obj["id":5])
+    verifyEq(s.expr, "select * from users join orgs on (users.id = orgs.user_id and id = @p0)")
+    verifyEq(s.params, Str:Obj["p0":5])
 
     // name = @name (2 params)
     s = SqlExpr.selectJoin("users", "*", "orgs", "user_id", ["enabled":true, "email":"bob@example.com"])
-    verifyEq(s.expr, "select * from users join orgs on (users.id = orgs.user_id and enabled = @enabled and email = @email)")
-    verifyEq(s.params, Str:Obj["enabled":true, "email":"bob@example.com"])
+    verifyEq(s.expr, "select * from users join orgs on (users.id = orgs.user_id and enabled = @p0 and email = @p1)")
+    verifyEq(s.params, Str:Obj["p0":true, "p1":"bob@example.com"])
 
     // lower(name) = name
     s = SqlExpr.selectJoin("users", "*", "orgs", "user_id", ["lower(email)":"Bob@Example.com"])
-    verifyEq(s.expr, "select * from users join orgs on (users.id = orgs.user_id and lower(email) = @email_lower)")
-    verifyEq(s.params, Str:Obj["email_lower":"bob@example.com"])
+    verifyEq(s.expr, "select * from users join orgs on (users.id = orgs.user_id and lower(email) = @p0)")
+    verifyEq(s.params, Str:Obj["p0":"bob@example.com"])
 
     // name in (1,2,3)
     s = SqlExpr.selectJoin("users", "*", "orgs", "user_id", ["id":[1,2,3]])
