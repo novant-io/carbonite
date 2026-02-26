@@ -71,7 +71,7 @@ internal class SqlExpr
         list.each |x,i|
         {
           // only Int[] list suppported
-          if (x isnot Int) throw ArgErr("Only Int[] type supported for '${n}'")
+          if (x isnot Int) throw SqlErr("Only Int[] type supported for '${n}'")
           if (i > 0) buf.addChar(',')
           buf.add(x)
         }
@@ -112,7 +112,7 @@ internal class SqlExpr
       col   := key[6..<close]
       rest  := key[close+1..-1].trim
       op    := rest.isEmpty ? "=" : rest
-      if (op != "=" && !ops.contains(op)) throw ArgErr("Invalid op: $op")
+      if (op != "=" && !ops.contains(op)) throw SqlErr("Invalid op: $op")
       buf.add("lower(${col}) ${op} @${pname}")
       params[pname] = val.toStr.lower
       return

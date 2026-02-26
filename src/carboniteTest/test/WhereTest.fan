@@ -89,6 +89,13 @@ class WhereTest : AbstractStoreTest
       verifyEq(r.size, 1)
       verifyEq(r[0]->name, "Ann")
 
+      // lower() with operator
+      r = t._listBy(["lower(name) !=": "ann"])
+      verifyEq(r.size, 3)
+      verifyEq(r[0]->name, "Bob")
+      verifyEq(r[1]->name, "Cam")
+      verifyEq(r[2]->name, "Dan")
+
       // in list
       r = t._listBy(["id": [1, 3]])
       verifyEq(r.size, 2)
@@ -121,6 +128,7 @@ class WhereTest : AbstractStoreTest
       // errs
       verifySqlErr { t._listBy(["age %%": 30]) }  // invalid operator
       verifySqlErr { t._listBy(["fake": 30])   }  // invalid column
+      verifySqlErr { t._listBy(["lower(name) %%": "ann"]) }  // invalid lower operator
     }
 
   }
