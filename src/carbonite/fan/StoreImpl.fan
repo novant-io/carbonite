@@ -547,6 +547,33 @@ internal abstract const class StoreImpl
     }
   }
 
+  ** Insert or update a record based on the given conflict columns.
+  ** If a row matching the conflict columns exists, update the
+  ** remaining fields. Otherwise insert a new row.
+  virtual Void upsert(CTable table, Str:Obj? fields, Str[] conflictCols)
+  {
+    onLockExec |conn|
+    {
+      verifyFieldSchema(table, fields)
+
+      // build insert
+      cols   := fields.keys
+      cnames := cols.join(",")
+      values := cols.join(",") |n| { "@${n}" }
+      insert := "insert into ${table.name} (${cnames}) values (${values})"
+
+      // build on conflict update (exclude conflict cols from update)
+      updateCols := cols.findAll |n| { !conflictCols.contains(n) }
+      assign := updateCols.join(",") |n| { "\"${n}\" = EXCLUDED.\"${n}\"" }
+      conflict := conflictCols.join(",")
+
+      // exec
+      sql := "${insert} on conflict (${conflict}) do update set ${assign}"
+      _exec(sql, fieldsToSql(table, fields))
+      return null
+    }
+  }
+
   ** Delete an existing record in sql database.
   virtual Void delete(CTable table, Int id)
   {

@@ -175,6 +175,18 @@ abstract const class CTable
     store.impl.updateBatch(this, cols.keys, batch)
   }
 
+  ** Insert or update a record. Conflict is determined by the
+  ** table's unique constraint. If a matching row exists, update
+  ** the remaining fields. Otherwise insert a new row.
+  Void upsert(Str:Obj? fields)
+  {
+    // get unique constraint cols
+    CUniqueConstraint? uc := constraints.find |c| { c is CUniqueConstraint }
+    if (uc == null) throw ArgErr("Table has no unique constraint for upsert")
+
+    store.impl.upsert(this, fields, uc.cols)
+  }
+
   ** Delete an existing record in this given id.
   Void delete(Int id)
   {
