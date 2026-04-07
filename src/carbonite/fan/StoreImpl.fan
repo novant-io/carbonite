@@ -558,7 +558,7 @@ internal abstract const class StoreImpl
 
       // build insert
       cols   := fields.keys
-      cnames := cols.join(",")
+      cnames := cols.join(",") |n| { "\"${n}\"" }
       values := cols.join(",") |n| { "@${n}" }
       insert := "insert into ${table.name} (${cnames}) values (${values})"
 
