@@ -101,6 +101,34 @@ class BasicTest : AbstractStoreTest
       verifyEq(e.listBy(["pos":"lead", "name":"Ron Burgundy"]).size, 1)
       verifyEq(e.listBy(["pos":"lead", "name":"No one"]).size, 0)
 
+      // list with include
+      recs := e.listAll(["include":["id", "name"]])
+      verifyEq(recs.size, 4)
+      verifyEq(recs[0]->name, "Ron Burgundy")
+      verifyEq(recs[0]->id, 1)
+      verifyEq(recs[0]->pos, null)
+
+      // listBy with include
+      recs = e.listBy(["pos":"lead"], ["include":["name"]])
+      verifyEq(recs.size, 2)
+      verifyEq(recs[0]->name, "Ron Burgundy")
+      verifyEq(recs[0]->id, null)
+      verifyEq(recs[0]->pos, null)
+
+      // list with exclude
+      recs = e.listAll(["exclude":["pos"]])
+      verifyEq(recs.size, 4)
+      verifyEq(recs[0]->name, "Ron Burgundy")
+      verifyEq(recs[0]->id, 1)
+      verifyEq(recs[0]->pos, null)
+
+      // listBy with exclude
+      recs = e.listBy(["pos":"lead"], ["exclude":["id"]])
+      verifyEq(recs.size, 2)
+      verifyEq(recs[0]->name, "Ron Burgundy")
+      verifyEq(recs[0]->pos, "lead")
+      verifyEq(recs[0]->id, null)
+
       // close and verify fail
       ds.close
       verifySqlErr { x := ds.table(Employees#).size }

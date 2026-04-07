@@ -87,4 +87,26 @@ internal const class CUtil
       off = end
     }
   }
+
+  ** Build column select from opts.
+  static Str selectCols(CTable table, Str:Obj? opts)
+  {
+    // short-circuit if no options
+    if (opts.isEmpty) return "*"
+
+    // include specific cols
+    inc := opts["include"] as Str[]
+    if (inc != null) return inc.join(",") |c| { "\"${c}\"" }
+
+    // exclude specific cols
+    exc := opts["exclude"] as Str[]
+    if (exc != null)
+    {
+      return table.cols
+        .findAll |c| { !exc.contains(c.name) }
+        .join(",") |c| { "\"${c.name}\"" }
+    }
+
+    return "*"
+  }
 }

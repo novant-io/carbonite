@@ -71,9 +71,10 @@ abstract const class CTable
   }
 
   ** List records in this table.
-  CRec[] listAll()
+  CRec[] listAll(Str:Obj? opts := none)
   {
-    store.impl.select(this, "*")
+    cs := CUtil.selectCols(this, opts)
+    return store.impl.select(this, cs)
   }
 
   ** List records by given ids.
@@ -83,9 +84,10 @@ abstract const class CTable
   }
 
   ** List records in this table where all 'where' conditions are equal.
-  CRec[] listBy(Str:Obj where)
+  CRec[] listBy(Str:Obj where, Str:Obj? opts := none)
   {
-    store.impl.select(this, "*", where)
+    cs := CUtil.selectCols(this, opts)
+    return store.impl.select(this, cs, where)
   }
 
 ////// TODO
@@ -211,6 +213,9 @@ abstract const class CTable
     this.cmapRef.val  = Str:CCol[:].setList(cols) |c| { c.name }.toImmutable
     this.scopedIdRef.val = cols.any |c| { c.scopedBy != null }
   }
+
+  // static const for non-options
+  private static const Str:Obj? none := [:]
 
   private CStore store() { storeRef.val }
   private const AtomicRef storeRef := AtomicRef(null)

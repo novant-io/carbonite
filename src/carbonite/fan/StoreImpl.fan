@@ -244,7 +244,7 @@ internal abstract const class StoreImpl
   ** Return result from select sql statement.
   virtual CRec[] select(CTable table, Str cols, [Str:Obj]? where := null)
   {
-    sql := "select * from ${table.name}"
+    sql := "select ${cols} from ${table.name}"
     if (where != null)
     {
       cond := StrBuf()
