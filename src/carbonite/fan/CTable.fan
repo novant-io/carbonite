@@ -74,7 +74,7 @@ abstract const class CTable
   CRec[] listAll(Str:Obj? opts := none)
   {
     cs := CUtil.selectCols(this, opts)
-    return store.impl.select(this, cs)
+    return store.impl.select(this, cs, null, opts)
   }
 
   ** List records by given ids.
@@ -87,7 +87,7 @@ abstract const class CTable
   CRec[] listBy(Str:Obj where, Str:Obj? opts := none)
   {
     cs := CUtil.selectCols(this, opts)
-    return store.impl.select(this, cs, where)
+    return store.impl.select(this, cs, where, opts)
   }
 
 ////// TODO

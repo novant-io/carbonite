@@ -129,6 +129,21 @@ class BasicTest : AbstractStoreTest
       verifyEq(recs[0]->pos, "lead")
       verifyEq(recs[0]->id, null)
 
+      // listBy with limit
+      recs = e.listBy(["pos":"lead"], ["limit":1])
+      verifyEq(recs.size, 1)
+      verifyEq(recs[0]->name, "Ron Burgundy")
+
+      // listBy with limit larger than matches
+      recs = e.listBy(["pos":"lead"], ["limit":10])
+      verifyEq(recs.size, 2)
+
+      // listBy with limit and include
+      recs = e.listBy(["pos":"lead"], ["limit":1, "include":["name"]])
+      verifyEq(recs.size, 1)
+      verifyEq(recs[0]->name, "Ron Burgundy")
+      verifyEq(recs[0]->id, null)
+
       // close and verify fail
       ds.close
       verifySqlErr { x := ds.table(Employees#).size }

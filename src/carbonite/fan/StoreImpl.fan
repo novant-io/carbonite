@@ -242,7 +242,7 @@ internal abstract const class StoreImpl
   }
 
   ** Return result from select sql statement.
-  virtual CRec[] select(CTable table, Str cols, [Str:Obj]? where := null)
+  virtual CRec[] select(CTable table, Str cols, [Str:Obj]? where := null, [Str:Obj?]? opts := null)
   {
     sql := "select ${cols} from ${table.name}"
     if (where != null)
@@ -250,6 +250,11 @@ internal abstract const class StoreImpl
       cond := StrBuf()
       where.each |v,n| { cond.join("${n} = @${n}", " and ") }
       sql += " where ${cond}"
+    }
+    if (opts != null)
+    {
+      limit := opts["limit"] as Int
+      if (limit != null) sql += " limit ${limit}"
     }
     // TODO FIXIT: fix sql to go directly -> CRec and nuke Row type
     return onLockExec |conn| {
